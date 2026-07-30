@@ -51,7 +51,78 @@ img{max-width:100%; display:block;}
 @media (prefers-reduced-motion: reduce){
   *{animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; scroll-behavior:auto !important;}
 }
+/* Better sizing */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
 
+/* Prevent horizontal scrolling */
+html {
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* Responsive images */
+img,
+picture,
+video {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Responsive typography */
+html {
+    font-size: clamp(14px, 1vw + 10px, 18px);
+}
+
+/* Flexible containers */
+.container {
+    width: min(1200px, 92%);
+    margin-inline: auto;
+}
+
+/* Prevent long words from breaking layout */
+h1, h2, h3, p {
+    overflow-wrap: break-word;
+}
+max-width: 1200px;
+width: 100%;
+font-size: 1.5rem;
+margin: 2rem;
+display: flex;
+flex-wrap: wrap;
+gap: 2rem;
+
+/* Tablets */
+@media (max-width: 992px) {
+
+}
+
+/* Large phones */
+@media (max-width: 768px) {
+
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+
+
+   h1 {
+    font-size: clamp(2rem, 6vw, 5rem);
+}
+
+button {
+    padding: clamp(.8rem, 2vw, 1.2rem);
+}
 /* ---------- Focus ---------- */
 a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible{
   outline:2px solid var(--gold);
