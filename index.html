@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Artistry Markets — Master the World's Financial Systems</title>
+<meta name="description" content="An immersive financial education and market intelligence command center.">
+
+<!-- ============ FONTS ============ -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script>
+/* Progressive font upgrade — never blocks or hides text.
+   Base CSS ships with system fonts as the live default. We only switch
+   to the premium webfonts once the browser CONFIRMS they finished
+   downloading, with a hard timeout so a slow/blocked/offline font host
+   (e.g. a sandboxed preview WebView) can never leave text invisible. */
+(function () {
+  if (!('fonts' in document)) return;
+  var done = false;
+  function upgrade() {
+    if (done) return;
+    done = true;
+    try {
+      if (document.fonts.check('1em Inter')) {
+        document.documentElement.style.setProperty('--font-body', "'Inter', -apple-system, BlinkMacSystemFont, sans-serif");
+      }
+      if (document.fonts.check('1em Fraunces')) {
+        document.documentElement.style.setProperty('--font-display', "'Fraunces', Georgia, serif");
+      }
+      if (document.fonts.check('1em "JetBrains Mono"')) {
+        document.documentElement.style.setProperty('--font-mono', "'JetBrains Mono', Consolas, monospace");
+      }
+    } catch (e) { /* keep safe system fonts */ }
+  }
+  Promise.all([
+    document.fonts.load('400 1em Inter').catch(function () {}),
+    document.fonts.load('500 1em Fraunces').catch(function () {}),
+    document.fonts.load('400 1em "JetBrains Mono"').catch(function () {})
+  ]).then(upgrade).catch(upgrade);
+  setTimeout(upgrade, 2500); // hard safety net — never wait forever
+})();
+</script>
+
+<!-- ============ LIBRARIES ============ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ======================================================
+     LOADER
+====================================================== -->
+<div id="loader">
+  <div class="loader-mark">AM</div>
+  <div class="loader-bar"><span></span></div>
+</div>
+
+<!-- ======================================================
+     TOP TICKER
+====================================================== -->
+<div id="ticker-bar" aria-label="Live market ticker">
+  <div class="ticker-track" id="ticker-track">
+    <!-- populated by JS, duplicated for seamless loop -->
+  </div>
+</div>
+
+<!-- ======================================================
+     NAV
+====================================================== -->
+<nav id="site-nav">
+  <div class="nav-inner">
+    <a href="#hero" class="brand">
+      <span class="brand-mark">◆</span>
+      <span class="brand-word">ARTISTRY <em>MARKETS</em></span>
+    </a>
+    <div class="nav-links" id="nav-links">
+      <a href="#money" data-nav>Money</a>
+      <a href="#gold" data-nav>Gold</a>
+      <a href="#stocks" data-nav>Stocks</a>
+      <a href="#crypto" data-nav>Crypto</a>
+      <a href="#trading" data-nav>Trading</a>
+      <a href="#investing" data-nav>Investing</a>
+      <a href="#business" data-nav>Business</a>
+      <a href="#economy" data-nav>Economy</a>
+      <a href="#ai-finance" data-nav>AI</a>
+      <a href="#academy" data-nav>Academy</a>
+      <a href="#news" data-nav>News</a>
+      <a href="#watchlist" data-nav>Watchlist</a>
+      <a href="#observatory" data-nav>Observatory</a>
+    </div>
+    <div class="nav-status" id="market-status-pill">
+      <span class="dot"></span><span class="status-text">Markets —</span>
+    </div>
+  </div>
+</nav>
+
+<!-- ======================================================
+     HERO
+====================================================== -->
+<header id="hero">
+  <canvas id="hero-map"></canvas>
+  <div class="hero-vignette"></div>
+  <div class="hero-content">
+    <p class="eyebrow" data-reveal>Global Financial Intelligence · Live</p>
+    <h1 data-reveal>
+      <span class="line">Master the world's</span>
+      <span class="line"><em>financial systems.</em></span>
+    </h1>
+    <p class="hero-sub" data-reveal>
+      Learn investing, understand global markets, explore how businesses are built,
+      and watch real financial data move — live, beautifully, in one command center.
+    </p>
+    <div class="hero-cta" data-reveal>
+      <a href="#economy" class="btn btn-primary">Explore Markets</a>
+      <a href="#academy" class="btn btn-ghost">Start Learning</a>
+    </div>
+    <div class="hero-meta" data-reveal>
+      <div><span id="hero-clock">--:--:--</span><label>Local time</label></div>
+      <div><span id="hero-btc">$—</span><label>Bitcoin</label></div>
+      <div><span id="hero-gold">$—</span><label>Gold / oz</label></div>
+    </div>
+  </div>
+  <div class="scroll-cue" aria-hidden="true"><span></span>Scroll</div>
+</header>
+
+<main id="main-content"></main>
+
+<footer id="site-footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="brand-mark">◆</span> ARTISTRY <em>MARKETS</em>
+      <p>An educational command center for how money, markets, and business really work.</p>
+    </div>
+    <div class="footer-cols">
+      <div>
+        <h4>Learn</h4>
+        <a href="#money">Money</a><a href="#gold">Gold</a><a href="#stocks">Stock Market</a>
+        <a href="#crypto">Cryptocurrency</a><a href="#trading">Trading</a><a href="#investing">Investing</a>
+      </div>
+      <div>
+        <h4>Explore</h4>
+        <a href="#business">Business</a><a href="#economy">Global Economy</a>
+        <a href="#ai-finance">AI in Finance</a><a href="#observatory">Observatory</a>
+      </div>
+      <div>
+        <h4>Tools</h4>
+        <a href="#academy">Financial Academy</a><a href="#news">Financial News</a>
+        <a href="#watchlist">Watchlist</a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 Artistry Markets. Educational content — not investment advice.</span>
+    <span id="footer-clock-line">Live data via CoinGecko &amp; Frankfurter · demo feeds marked accordingly</span>
+  </div>
+</footer>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="content.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,2034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Artistry Markets — Master the World's Financial Systems</title>
+<meta name="description" content="An immersive financial education and market intelligence command center.">
+
+<!-- ============ FONTS ============ -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script>
+/* Progressive font upgrade — never blocks or hides text.
+   Base CSS ships with system fonts as the live default. We only switch
+   to the premium webfonts once the browser CONFIRMS they finished
+   downloading, with a hard timeout so a slow/blocked/offline font host
+   (e.g. a sandboxed preview WebView) can never leave text invisible. */
+(function () {
+  if (!('fonts' in document)) return;
+  var done = false;
+  function upgrade() {
+    if (done) return;
+    done = true;
+    try {
+      if (document.fonts.check('1em Inter')) {
+        document.documentElement.style.setProperty('--font-body', "'Inter', -apple-system, BlinkMacSystemFont, sans-serif");
+      }
+      if (document.fonts.check('1em Fraunces')) {
+        document.documentElement.style.setProperty('--font-display', "'Fraunces', Georgia, serif");
+      }
+      if (document.fonts.check('1em "JetBrains Mono"')) {
+        document.documentElement.style.setProperty('--font-mono', "'JetBrains Mono', Consolas, monospace");
+      }
+    } catch (e) { /* keep safe system fonts */ }
+  }
+  Promise.all([
+    document.fonts.load('400 1em Inter').catch(function () {}),
+    document.fonts.load('500 1em Fraunces').catch(function () {}),
+    document.fonts.load('400 1em "JetBrains Mono"').catch(function () {})
+  ]).then(upgrade).catch(upgrade);
+  setTimeout(upgrade, 2500); // hard safety net — never wait forever
+})();
+</script>
+
+<!-- ============ LIBRARIES ============ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<style>
+/* ==========================================================================
+   ARTISTRY MARKETS — DESIGN SYSTEM
+   Theme: Institutional / Bloomberg Terminal x Apple x Mission Control
+   ========================================================================== */
+
+:root{
+  --bg:#050505;
+  --bg2:#111111;
+  --card:#161616;
+  --card-hi:#1c1c1c;
+  --gold:#D4AF37;
+  --gold-dim:#8a742b;
+  --green:#2ECC71;
+  --red:#E74C3C;
+  --text:#F5F5F5;
+  --muted:#A9A9A9;
+  --hairline:rgba(245,245,245,0.08);
+  --gold-line:rgba(212,175,55,0.28);
+  --glass:rgba(22,22,22,0.55);
+  --radius:14px;
+  --radius-sm:8px;
+  --ease:cubic-bezier(.22,1,.36,1);
+  --font-display:Georgia, 'Times New Roman', serif;
+  --font-body:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  --font-mono:Consolas, Menlo, 'SF Mono', monospace;
+  --nav-h:64px;
+  --ticker-h:36px;
+}
+
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth; scroll-padding-top: calc(var(--nav-h) + var(--ticker-h) + 12px);}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-body);
+  font-weight:400;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+  width:100%;
+}
+html, body{max-width:100vw;}
+h1,h2,h3,h4,h5,p,span,a,label,td,th,div{overflow-wrap:break-word; word-break:break-word;}
+canvas{max-width:100%;}
+::selection{background:var(--gold); color:#050505;}
+
+a{color:inherit; text-decoration:none;}
+button{font-family:inherit; cursor:pointer; border:none; background:none; color:inherit;}
+input, select{font-family:inherit;}
+img{max-width:100%; display:block;}
+
+.numeral{font-family:var(--font-mono);}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; scroll-behavior:auto !important;}
+}
+
+/* ---------- Focus ---------- */
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible{
+  outline:2px solid var(--gold);
+  outline-offset:3px;
+  border-radius:4px;
+}
+
+/* ==========================================================================
+   LOADER
+   ========================================================================== */
+#loader{
+  position:fixed; inset:0; z-index:9999;
+  background:var(--bg);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:22px;
+  transition:opacity .6s var(--ease), visibility .6s var(--ease);
+}
+#loader.hidden{opacity:0; visibility:hidden; pointer-events:none;}
+.loader-mark{
+  font-family:var(--font-display);
+  font-size:2.2rem; font-weight:600; letter-spacing:0.08em;
+  color:var(--gold);
+}
+.loader-bar{width:180px; height:1px; background:var(--hairline); position:relative; overflow:hidden;}
+.loader-bar span{position:absolute; inset:0; width:40%; background:var(--gold); animation:loaderSlide 1.1s ease-in-out infinite;}
+@keyframes loaderSlide{
+  0%{transform:translateX(-100%);}
+  100%{transform:translateX(350%);}
+}
+
+/* ==========================================================================
+   TICKER
+   ========================================================================== */
+#ticker-bar{
+  position:fixed; top:0; left:0; right:0; z-index:1001;
+  height:var(--ticker-h);
+  background:#000;
+  border-bottom:1px solid var(--hairline);
+  overflow:hidden;
+  display:flex; align-items:center;
+}
+.ticker-track{
+  display:flex; align-items:center; gap:0;
+  white-space:nowrap;
+  animation:tickerScroll 42s linear infinite;
+  will-change:transform;
+}
+#ticker-bar:hover .ticker-track{animation-play-state:paused;}
+@keyframes tickerScroll{
+  from{transform:translateX(0);}
+  to{transform:translateX(-50%);}
+}
+.tick-item{
+  display:inline-flex; align-items:baseline; gap:8px;
+  padding:0 22px;
+  font-family:var(--font-mono);
+  font-size:0.75rem;
+  border-right:1px solid var(--hairline);
+}
+.tick-sym{color:var(--muted); letter-spacing:0.04em;}
+.tick-val{color:var(--text); font-weight:500;}
+.tick-chg.up{color:var(--green);}
+.tick-chg.down{color:var(--red);}
+.tick-demo{color:var(--gold-dim); font-size:0.62rem; letter-spacing:0.08em; margin-left:2px;}
+
+/* ==========================================================================
+   NAV
+   ========================================================================== */
+#site-nav{
+  position:fixed; top:var(--ticker-h); left:0; right:0; z-index:1000;
+  height:var(--nav-h);
+  background:rgba(5,5,5,0.7);
+  backdrop-filter:blur(16px) saturate(140%);
+  -webkit-backdrop-filter:blur(16px) saturate(140%);
+  border-bottom:1px solid var(--hairline);
+  transition:background .3s var(--ease), border-color .3s var(--ease);
+}
+.nav-inner{
+  max-width:1440px; margin:0 auto; height:100%;
+  padding:0 clamp(14px, 4vw, 32px);
+  display:flex; align-items:center; justify-content:space-between; gap:clamp(10px, 2vw, 24px);
+  width:100%;
+}
+.brand{display:flex; align-items:center; gap:10px; font-family:var(--font-display); font-size:1.05rem; letter-spacing:0.02em; flex-shrink:0;}
+.brand-mark{color:var(--gold); font-size:0.85rem;}
+.brand-word em{font-style:normal; color:var(--gold);}
+.nav-links{
+  display:flex; align-items:center; gap:2px; overflow-x:auto; scrollbar-width:none; flex:1 1 0; min-width:0; justify-content:flex-start;
+  -webkit-overflow-scrolling:touch;
+  mask-image:linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+  -webkit-mask-image:linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+}
+.nav-links::-webkit-scrollbar{display:none;}
+.nav-links a{
+  font-size:0.78rem; letter-spacing:0.03em; color:var(--muted);
+  padding:8px 12px; border-radius:999px; white-space:nowrap; flex-shrink:0;
+  transition:color .2s, background .2s;
+}
+.nav-links a:hover, .nav-links a.active{color:var(--text); background:rgba(212,175,55,0.08);}
+.nav-status{
+  display:flex; align-items:center; gap:8px;
+  font-family:var(--font-mono); font-size:0.7rem; color:var(--muted);
+  flex-shrink:0; padding:6px 12px; border:1px solid var(--hairline); border-radius:999px;
+}
+.nav-status .dot{width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green);}
+.nav-status.closed .dot{background:var(--red); box-shadow:0 0 8px var(--red);}
+
+/* ==========================================================================
+   HERO
+   ========================================================================== */
+#hero{
+  position:relative;
+  min-height:100vh;
+  display:flex; align-items:center;
+  padding-top:calc(var(--nav-h) + var(--ticker-h));
+  overflow:hidden;
+  background:radial-gradient(ellipse at 50% 0%, #0d0d0d 0%, #050505 60%);
+}
+#hero-map{position:absolute; inset:0; width:100%; height:100%; opacity:0.85;}
+.hero-vignette{
+  position:absolute; inset:0;
+  background:linear-gradient(180deg, rgba(5,5,5,0.2) 0%, rgba(5,5,5,0.55) 70%, var(--bg) 100%);
+  pointer-events:none;
+}
+.hero-content{
+  position:relative; z-index:2;
+  max-width:900px; margin:0 auto; padding:60px 32px 40px;
+  text-align:center;
+}
+.eyebrow{
+  font-family:var(--font-mono); font-size:0.72rem; letter-spacing:0.18em; text-transform:uppercase;
+  color:var(--gold); margin-bottom:22px;
+}
+#hero h1{
+  font-family:var(--font-display); font-weight:500;
+  font-size:clamp(2.6rem, 6.4vw, 5rem);
+  line-height:1.08; letter-spacing:-0.01em;
+  margin-bottom:26px;
+}
+#hero h1 .line{display:block;}
+#hero h1 em{font-style:italic; color:var(--gold); font-weight:400;}
+.hero-sub{
+  font-size:clamp(1rem, 1.6vw, 1.2rem); color:var(--muted);
+  max-width:620px; margin:0 auto 38px;
+  font-weight:300;
+}
+.hero-cta{display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin-bottom:56px;}
+.btn{
+  padding:14px 30px; border-radius:999px; font-size:0.88rem; font-weight:500;
+  letter-spacing:0.02em; transition:transform .25s var(--ease), box-shadow .25s var(--ease), background .25s;
+  display:inline-block;
+}
+.btn-primary{background:var(--gold); color:#050505;}
+.btn-primary:hover{transform:translateY(-2px); box-shadow:0 10px 30px -8px rgba(212,175,55,0.5);}
+.btn-ghost{border:1px solid var(--hairline); color:var(--text); background:rgba(255,255,255,0.02);}
+.btn-ghost:hover{border-color:var(--gold-line); transform:translateY(-2px);}
+
+.hero-meta{
+  display:flex; flex-wrap:wrap; justify-content:center; gap:clamp(20px, 5vw, 48px);
+  padding-top:32px; border-top:1px solid var(--hairline);
+}
+.hero-meta div{display:flex; flex-direction:column; align-items:center; gap:4px;}
+.hero-meta span{font-family:var(--font-mono); font-size:1.15rem; color:var(--text);}
+.hero-meta label{font-size:0.68rem; color:var(--muted); letter-spacing:0.06em; text-transform:uppercase;}
+
+.scroll-cue{
+  position:absolute; bottom:26px; left:50%; transform:translateX(-50%);
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  font-family:var(--font-mono); font-size:0.65rem; color:var(--muted); letter-spacing:0.1em;
+  z-index:2;
+}
+.scroll-cue span{width:1px; height:34px; background:linear-gradient(var(--gold), transparent); animation:scrollCue 1.8s ease-in-out infinite;}
+@keyframes scrollCue{0%{opacity:0; transform:scaleY(0.3);} 50%{opacity:1;} 100%{opacity:0; transform:scaleY(1);}}
+
+/* ==========================================================================
+   SECTION FRAMEWORK
+   ========================================================================== */
+.section{
+  position:relative;
+  padding:clamp(56px, 9vw, 110px) clamp(16px, 4vw, 32px);
+  border-bottom:1px solid var(--hairline);
+  max-width:1440px; margin:0 auto;
+  width:100%;
+}
+.section-inner{max-width:1180px; margin:0 auto; min-width:0;}
+.section-head{
+  display:grid; grid-template-columns:auto minmax(0, 1fr); gap:clamp(14px, 3vw, 28px); align-items:start;
+  margin-bottom:56px;
+}
+.section-index{
+  font-family:var(--font-mono); font-size:0.78rem; color:var(--gold);
+  border:1px solid var(--gold-line); border-radius:999px;
+  width:44px; height:44px; display:flex; align-items:center; justify-content:center;
+}
+.section-title-wrap .eyebrow{margin-bottom:10px;}
+.section-title-wrap h2{
+  font-family:var(--font-display); font-weight:500; font-size:clamp(1.9rem, 3.6vw, 2.9rem);
+  letter-spacing:-0.01em; margin-bottom:14px;
+}
+.section-title-wrap{min-width:0;}
+.section-title-wrap p{color:var(--muted); max-width:640px; font-size:1rem; font-weight:300;}
+
+.teach-grid{
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+  gap:1px; background:var(--hairline); border:1px solid var(--hairline); border-radius:var(--radius);
+  overflow:hidden; margin-bottom:48px;
+}
+.teach-card{background:var(--bg2); padding:26px 24px; min-width:0;}
+.teach-card h3{font-family:var(--font-display); font-weight:500; font-size:1.05rem; margin-bottom:10px; color:var(--text);}
+.teach-card p{font-size:0.88rem; color:var(--muted); font-weight:300;}
+
+.dash-label{
+  display:flex; align-items:center; gap:10px;
+  font-family:var(--font-mono); font-size:0.7rem; letter-spacing:0.12em; text-transform:uppercase;
+  color:var(--gold); margin-bottom:20px;
+}
+.dash-label::before{content:''; width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green); animation:pulseDot 2s infinite;}
+@keyframes pulseDot{0%,100%{opacity:1;} 50%{opacity:0.35;}}
+
+.dash-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(min(230px, 100%), 1fr)); gap:16px;}
+.card{
+  background:var(--card);
+  border:1px solid var(--hairline);
+  border-radius:var(--radius);
+  padding:22px;
+  position:relative;
+  min-width:0;
+  transition:border-color .3s, transform .3s var(--ease);
+}
+.card:hover{border-color:var(--gold-line);}
+.card-glow{position:relative;}
+.card-glow::before{
+  content:''; position:absolute; inset:-1px; border-radius:inherit;
+  background:linear-gradient(135deg, rgba(212,175,55,0.35), transparent 60%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor; mask-composite:exclude;
+  padding:1px; pointer-events:none; opacity:0.6;
+}
+.card h4{font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); margin-bottom:12px; font-weight:500;}
+.card .stat{font-family:var(--font-mono); font-size:clamp(1.15rem, 1.6vw + 0.7rem, 1.7rem); color:var(--text); font-weight:500; overflow-wrap:anywhere;}
+.card .stat small{font-size:0.9rem; color:var(--muted); font-weight:400;}
+.card .delta{font-family:var(--font-mono); font-size:0.82rem; margin-top:6px; display:inline-block;}
+.delta.up{color:var(--green);}
+.delta.down{color:var(--red);}
+.card .foot-note{font-size:0.72rem; color:var(--muted); margin-top:10px;}
+
+.panel{background:var(--card); border:1px solid var(--hairline); border-radius:var(--radius); padding:clamp(18px, 3vw, 28px); min-width:0;}
+.panel-title{font-family:var(--font-display); font-size:1.15rem; margin-bottom:18px; color:var(--text);}
+
+.two-col{display:grid; grid-template-columns:1.1fr 0.9fr; gap:24px;}
+.two-col > *, .three-col > *{min-width:0;}
+.three-col{display:grid; grid-template-columns:repeat(3, 1fr); gap:16px;}
+@media (max-width:900px){.two-col, .three-col{grid-template-columns:1fr;}}
+
+.badge{
+  display:inline-flex; align-items:center; gap:6px;
+  font-family:var(--font-mono); font-size:0.62rem; letter-spacing:0.08em; text-transform:uppercase;
+  color:var(--gold-dim); border:1px solid var(--gold-line); border-radius:999px; padding:3px 9px;
+}
+
+/* tables */
+.table-scroll{width:100%; max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch;}
+.data-table{width:100%; min-width:420px; border-collapse:collapse; font-size:clamp(0.76rem, 1.4vw + 0.4rem, 0.85rem);}
+.data-table th{
+  text-align:left; font-family:var(--font-mono); font-size:0.68rem; letter-spacing:0.08em; text-transform:uppercase;
+  color:var(--muted); padding:10px 12px; border-bottom:1px solid var(--hairline); font-weight:500;
+}
+.data-table td{padding:12px; border-bottom:1px solid var(--hairline); font-family:var(--font-mono);}
+.data-table td.name-cell{font-family:var(--font-body);}
+.data-table tr:last-child td{border-bottom:none;}
+.data-table tr:hover td{background:rgba(255,255,255,0.02);}
+
+/* forms */
+.field{margin-bottom:16px;}
+.field label{display:block; font-size:0.72rem; color:var(--muted); letter-spacing:0.04em; margin-bottom:7px; text-transform:uppercase; font-family:var(--font-mono);}
+.field input[type="number"], .field input[type="text"], .field select{
+  width:100%; background:var(--bg2); border:1px solid var(--hairline); border-radius:var(--radius-sm);
+  padding:11px 13px; color:var(--text); font-family:var(--font-mono); font-size:0.9rem;
+  transition:border-color .2s;
+}
+.field input:focus, .field select:focus{border-color:var(--gold); outline:none;}
+.field-row{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+.field input[type="range"]{width:100%; accent-color:var(--gold); background:transparent;}
+.range-row{display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:0.78rem; color:var(--muted); margin-bottom:6px;}
+.range-row span{color:var(--gold);}
+
+/* accordion (academy) */
+.accordion-item{border:1px solid var(--hairline); border-radius:var(--radius); margin-bottom:12px; overflow:hidden; background:var(--card);}
+.accordion-trigger{
+  width:100%; display:flex; align-items:center; justify-content:space-between; gap:16px;
+  padding:20px 24px; text-align:left;
+}
+.accordion-trigger .lvl-title{display:flex; align-items:center; gap:14px;}
+.accordion-trigger .lvl-num{font-family:var(--font-mono); color:var(--gold); font-size:0.85rem;}
+.accordion-trigger h3{font-family:var(--font-display); font-size:1.15rem; font-weight:500;}
+.accordion-trigger .chevron{transition:transform .3s var(--ease); color:var(--muted);}
+.accordion-item.open .chevron{transform:rotate(180deg); color:var(--gold);}
+.accordion-panel{max-height:0; overflow:hidden; transition:max-height .4s var(--ease);}
+.accordion-body{padding:0 24px 24px; display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:10px;}
+.topic-chip{
+  display:flex; align-items:center; gap:9px; font-size:0.85rem; color:var(--muted);
+  padding:9px 12px; border:1px solid var(--hairline); border-radius:var(--radius-sm);
+}
+.topic-chip::before{content:'○'; color:var(--gold); font-size:0.7rem;}
+
+/* filters / chips */
+.filter-row{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:24px;}
+.chip-btn{
+  padding:8px 16px; border-radius:999px; border:1px solid var(--hairline); font-size:0.78rem; color:var(--muted);
+  transition:all .2s;
+}
+.chip-btn.active, .chip-btn:hover{border-color:var(--gold); color:var(--gold); background:rgba(212,175,55,0.06);}
+
+/* news */
+.news-list{display:flex; flex-direction:column; gap:1px; background:var(--hairline); border:1px solid var(--hairline); border-radius:var(--radius); overflow:hidden;}
+.news-item{background:var(--bg2); padding:20px 22px; display:grid; grid-template-columns:auto 1fr auto; gap:18px; align-items:center;}
+.news-cat{font-family:var(--font-mono); font-size:0.65rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--gold); border:1px solid var(--gold-line); padding:4px 9px; border-radius:999px; white-space:nowrap; height:fit-content;}
+.news-item h4{font-size:0.95rem; font-weight:500; margin-bottom:4px;}
+.news-item p{font-size:0.8rem; color:var(--muted); font-weight:300;}
+.news-time{font-family:var(--font-mono); font-size:0.72rem; color:var(--muted); white-space:nowrap;}
+@media (max-width:700px){.news-item{grid-template-columns:1fr; text-align:left;}}
+
+/* watchlist */
+.watch-add{display:flex; gap:10px; margin-bottom:22px; flex-wrap:wrap;}
+.watch-add select, .watch-add input{flex:1; min-width:160px;}
+.watch-empty{padding:50px 20px; text-align:center; color:var(--muted); font-size:0.9rem; border:1px dashed var(--hairline); border-radius:var(--radius);}
+.watch-row td .rm-btn{color:var(--red); font-family:var(--font-mono); font-size:0.75rem; border:1px solid rgba(231,76,60,0.35); padding:4px 10px; border-radius:999px;}
+.watch-row td .rm-btn:hover{background:rgba(231,76,60,0.1);}
+
+/* heatmap */
+.heatmap{display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100px, 100%),1fr)); gap:6px;}
+.heat-tile{border-radius:8px; padding:12px; display:flex; flex-direction:column; justify-content:space-between; min-height:88px; transition:transform .2s;}
+.heat-tile:hover{transform:scale(1.04); z-index:2;}
+.heat-tile .sym{font-family:var(--font-mono); font-weight:600; font-size:0.85rem;}
+.heat-tile .chg{font-family:var(--font-mono); font-size:0.78rem;}
+
+/* gauge */
+.gauge-wrap{display:flex; flex-direction:column; align-items:center; gap:10px;}
+.gauge-label{font-family:var(--font-mono); font-size:1.4rem; color:var(--gold);}
+
+/* observatory */
+#observatory{padding:0; border-bottom:1px solid var(--hairline);}
+.observatory-inner{position:relative; max-width:none; padding:110px 32px; background:radial-gradient(ellipse at 50% 30%, #0c0c0c 0%, #050505 65%);}
+#globe-canvas-wrap{position:relative; height:640px; border-radius:var(--radius); overflow:hidden; border:1px solid var(--hairline); background:#020202;}
+#globe-canvas-wrap canvas{display:block; width:100%; height:100%;}
+.globe-tooltip{
+  position:absolute; pointer-events:none; background:rgba(10,10,10,0.92); border:1px solid var(--gold-line);
+  border-radius:10px; padding:14px 16px; font-size:0.8rem; width:max-content; max-width:min(220px, 78vw); opacity:0; transition:opacity .15s;
+  backdrop-filter:blur(6px); z-index:5;
+}
+.globe-tooltip.show{opacity:1;}
+.globe-tooltip h5{font-family:var(--font-display); font-size:1.05rem; margin-bottom:8px; color:var(--gold);}
+.globe-tooltip .row{display:flex; justify-content:space-between; gap:14px; padding:3px 0; color:var(--muted); font-family:var(--font-mono); font-size:0.75rem;}
+.globe-tooltip .row b{color:var(--text); font-weight:500;}
+.globe-fallback{display:none; align-items:center; justify-content:center; height:100%; color:var(--muted); text-align:center; padding:40px; font-size:0.9rem;}
+.globe-hint{text-align:center; color:var(--muted); font-size:0.75rem; margin-top:14px; font-family:var(--font-mono);}
+
+/* toast */
+#toast{
+  position:fixed; bottom:28px; left:50%; transform:translate(-50%, 20px);
+  background:var(--card-hi); border:1px solid var(--gold-line); border-radius:999px;
+  padding:12px 22px; font-size:0.82rem; z-index:2000; opacity:0; pointer-events:none;
+  transition:opacity .3s var(--ease), transform .3s var(--ease);
+}
+#toast.show{opacity:1; transform:translate(-50%, 0);}
+
+/* footer */
+#site-footer{background:#020202; padding:70px 32px 30px; border-top:1px solid var(--hairline);}
+.footer-inner{max-width:1180px; margin:0 auto; display:flex; justify-content:space-between; gap:60px; flex-wrap:wrap; padding-bottom:40px; border-bottom:1px solid var(--hairline);}
+.footer-brand{max-width:320px; font-family:var(--font-display); font-size:1.1rem;}
+.footer-brand em{font-style:normal; color:var(--gold);}
+.footer-brand p{font-family:var(--font-body); font-size:0.85rem; color:var(--muted); margin-top:14px; font-weight:300;}
+.footer-cols{display:flex; gap:56px; flex-wrap:wrap;}
+.footer-cols h4{font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--gold); margin-bottom:16px;}
+.footer-cols a{display:block; font-size:0.85rem; color:var(--muted); margin-bottom:10px;}
+.footer-cols a:hover{color:var(--text);}
+.footer-bottom{max-width:1180px; margin:24px auto 0; display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap; font-size:0.75rem; color:var(--muted); font-family:var(--font-mono);}
+
+/* reveal animation base state */
+[data-reveal]{opacity:0; transform:translateY(24px);}
+.reveal-on [data-reveal]{opacity:1; transform:none;}
+
+/* responsive */
+@media (max-width:980px){
+  .nav-links a{padding:7px 10px; font-size:0.74rem;}
+  .nav-status{display:none;}
+  .section-head{grid-template-columns:1fr;}
+  #globe-canvas-wrap{height:440px;}
+}
+@media (max-width:600px){
+  .hero-meta{gap:20px;}
+  .hero-meta span{font-size:1rem;}
+  :root{--nav-h:54px;}
+  .brand-word{display:none;}
+  .nav-links a{padding:6px 9px; font-size:0.7rem;}
+  .field-row{grid-template-columns:1fr;}
+  .footer-inner, .footer-bottom{gap:32px;}
+  .footer-cols{gap:32px;}
+}
+@media (max-width:420px){
+  #globe-canvas-wrap{height:340px;}
+  .tick-item{padding:0 14px; font-size:0.7rem;}
+  .btn{padding:13px 22px; font-size:0.82rem;}
+  .card{padding:18px;}
+  .panel{padding:18px;}
+  .accordion-trigger{padding:16px 18px;}
+  .accordion-body{padding:0 18px 18px;}
+}
+
+</style>
+</head>
+<body>
+
+<!-- ======================================================
+     LOADER
+====================================================== -->
+<div id="loader">
+  <div class="loader-mark">AM</div>
+  <div class="loader-bar"><span></span></div>
+</div>
+
+<!-- ======================================================
+     TOP TICKER
+====================================================== -->
+<div id="ticker-bar" aria-label="Live market ticker">
+  <div class="ticker-track" id="ticker-track">
+    <!-- populated by JS, duplicated for seamless loop -->
+  </div>
+</div>
+
+<!-- ======================================================
+     NAV
+====================================================== -->
+<nav id="site-nav">
+  <div class="nav-inner">
+    <a href="#hero" class="brand">
+      <span class="brand-mark">◆</span>
+      <span class="brand-word">ARTISTRY <em>MARKETS</em></span>
+    </a>
+    <div class="nav-links" id="nav-links">
+      <a href="#money" data-nav>Money</a>
+      <a href="#gold" data-nav>Gold</a>
+      <a href="#stocks" data-nav>Stocks</a>
+      <a href="#crypto" data-nav>Crypto</a>
+      <a href="#trading" data-nav>Trading</a>
+      <a href="#investing" data-nav>Investing</a>
+      <a href="#business" data-nav>Business</a>
+      <a href="#economy" data-nav>Economy</a>
+      <a href="#ai-finance" data-nav>AI</a>
+      <a href="#academy" data-nav>Academy</a>
+      <a href="#news" data-nav>News</a>
+      <a href="#watchlist" data-nav>Watchlist</a>
+      <a href="#observatory" data-nav>Observatory</a>
+    </div>
+    <div class="nav-status" id="market-status-pill">
+      <span class="dot"></span><span class="status-text">Markets —</span>
+    </div>
+  </div>
+</nav>
+
+<!-- ======================================================
+     HERO
+====================================================== -->
+<header id="hero">
+  <canvas id="hero-map"></canvas>
+  <div class="hero-vignette"></div>
+  <div class="hero-content">
+    <p class="eyebrow" data-reveal>Global Financial Intelligence · Live</p>
+    <h1 data-reveal>
+      <span class="line">Master the world's</span>
+      <span class="line"><em>financial systems.</em></span>
+    </h1>
+    <p class="hero-sub" data-reveal>
+      Learn investing, understand global markets, explore how businesses are built,
+      and watch real financial data move — live, beautifully, in one command center.
+    </p>
+    <div class="hero-cta" data-reveal>
+      <a href="#economy" class="btn btn-primary">Explore Markets</a>
+      <a href="#academy" class="btn btn-ghost">Start Learning</a>
+    </div>
+    <div class="hero-meta" data-reveal>
+      <div><span id="hero-clock">--:--:--</span><label>Local time</label></div>
+      <div><span id="hero-btc">$—</span><label>Bitcoin</label></div>
+      <div><span id="hero-gold">$—</span><label>Gold / oz</label></div>
+    </div>
+  </div>
+  <div class="scroll-cue" aria-hidden="true"><span></span>Scroll</div>
+</header>
+
+<main id="main-content"></main>
+
+<footer id="site-footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="brand-mark">◆</span> ARTISTRY <em>MARKETS</em>
+      <p>An educational command center for how money, markets, and business really work.</p>
+    </div>
+    <div class="footer-cols">
+      <div>
+        <h4>Learn</h4>
+        <a href="#money">Money</a><a href="#gold">Gold</a><a href="#stocks">Stock Market</a>
+        <a href="#crypto">Cryptocurrency</a><a href="#trading">Trading</a><a href="#investing">Investing</a>
+      </div>
+      <div>
+        <h4>Explore</h4>
+        <a href="#business">Business</a><a href="#economy">Global Economy</a>
+        <a href="#ai-finance">AI in Finance</a><a href="#observatory">Observatory</a>
+      </div>
+      <div>
+        <h4>Tools</h4>
+        <a href="#academy">Financial Academy</a><a href="#news">Financial News</a>
+        <a href="#watchlist">Watchlist</a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 Artistry Markets. Educational content — not investment advice.</span>
+    <span id="footer-clock-line">Live data via CoinGecko &amp; Frankfurter · demo feeds marked accordingly</span>
+  </div>
+</footer>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ==========================================================================
+   ARTISTRY MARKETS — CONTENT LAYER
+   All section markup + static/reference datasets live here, kept separate
+   from app.js (behavior) so copy can be edited without touching logic.
+   ========================================================================== */
+
+const SECTIONS = [];
+
+/* ---------------------------------------------------------------------
+   1. MONEY
+--------------------------------------------------------------------- */
+SECTIONS.push({
+  id: 'money',
+  html: `
+  <div class="section-inner">
+    <div class="section-head">
+      <div class="section-index">01</div>
+      <div class="section-title-wrap">
+        <p class="eyebrow">Foundations</p>
+        <h2>Money</h2>
+        <p>Before charts and tickers mean anything, it helps to understand the substance underneath them: what money actually is, who creates it, and why it quietly loses value over time.</p>
+      </div>
+    </div>
+
+    <div class="teach-grid">
+      <div class="teach-card"><h3>What is money?</h3><p>A shared belief system for value — anything widely accepted for trade, that stores value and lets us compare the worth of very different things.</p></div>
+      <div class="teach-card"><h3>A short history</h3><p>Barter gave way to commodity money (salt, shells, metal), then coinage, then paper claims on gold, then — since 1971 — pure fiat currency backed by trust alone.</p></div>
+      <div class="teach-card"><h3>Fiat currency</h3><p>Money with no physical backing, valuable because a government declares it legal tender and people agree to use it.</p></div>
+      <div class="teach-card"><h3>Inflation</h3><p>The gradual rise in prices — and fall in what each unit of currency buys — usually driven by the money supply growing faster than the economy.</p></div>
+      <div class="teach-card"><h3>Purchasing power</h3><p>What your money can actually buy. The same $100 buys less every year inflation runs above 0%, even if the number in your account stays the same.</p></div>
+      <div class="teach-card"><h3>Central banks</h3><p>Institutions like the Federal Reserve or RBI that set interest rates and manage the money supply to balance growth against inflation.</p></div>
+      <div class="teach-card"><h3>How money is created</h3><p>Governments don't just print notes — most new money is created when commercial banks issue loans, expanding deposits far beyond physical cash in circulation.</p></div>
+      <div class="teach-card"><h3>Emergency funds</h3><p>Three to six months of essential expenses, kept liquid and boring, so a job loss or medical bill never forces you to sell investments at a bad time.</p></div>
+    </div>
+
+    <div class="dash-label">Live Dashboard · Currency &amp; Inflation</div>
+    <div class="two-col" style="margin-bottom:20px;">
+      <div class="panel">
+        <div class="panel-title">Currency Converter</div>
+        <div class="field-row">
+          <div class="field">
+            <label for="conv-amount">Amount</label>
+            <input type="number" id="conv-amount" value="1000" min="0" step="1">
+          </div>
+          <div class="field">
+            <label for="conv-from">From</label>
+            <select id="conv-from"></select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="conv-to">To</label>
+            <select id="conv-to"></select>
+          </div>
+          <div class="field" style="display:flex; align-items:flex-end;">
+            <div class="stat" id="conv-result" style="width:100%;">—</div>
+          </div>
+        </div>
+        <div class="foot-note" id="conv-rate-note">Fetching live exchange rates…</div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Exchange Rates vs USD</div>
+        <div class="table-scroll"><table class="data-table" id="fx-table">
+          <thead><tr><th>Currency</th><th>Rate</th><th>24h</th></tr></thead>
+          <tbody><tr><td colspan="3" style="color:var(--muted);">Loading…</td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">$100 of Purchasing Power, 1990 → Today <span class="badge">Illustrative</span></div>
+      <canvas id="purchasing-power-chart" height="90"></canvas>
+    </div>
+  </div>`
+});
+
+/* ---------------------------------------------------------------------
+   2. GOLD
+--------------------------------------------------------------------- */
+SECTIONS.push({
+  id: 'gold',
+  html: `
+  <div class="section-inner">
+    <div class="section-head">
+      <div class="section-index">02</div>
+      <div class="section-title-wrap">
+        <p class="eyebrow">Hard Assets</p>
+        <h2>Gold</h2>
+        <p>For five thousand years, gold has been the asset every civilization eventually trusted. It doesn't rust, can't be printed, and answers to no central bank.</p>
+      </div>
+    </div>
+
+    <div class="teach-grid">
+      <div class="teach-card"><h3>Physical vs digital gold</h3><p>Coins and bars give direct ownership; digital gold and gold ETFs give price exposure without storage — at the cost of counterparty trust.</p></div>
+      <div class="teach-card"><h3>Hallmarking</h3><p>An independent stamp certifying purity (e.g. 22K, 24K) so buyers don't have to take a seller's word for gold content.</p></div>
+      <div class="teach-card"><h3>Why central banks buy gold</h3><p>Gold carries no counterparty risk — no issuer can default on it — which makes it a reserve asset that holds value through currency and political crises.</p></div>
+      <div class="teach-card"><h3>The safe-haven case</h3><p>Gold has historically moved opposite to confidence: it tends to rise when currencies weaken, inflation runs hot, or geopolitical risk spikes.</p></div>
+      <div class="teach-card"><h3>Advantages</h3><p>Scarcity, portability, universal recognition, and a multi-thousand-year track record as a store of value.</p></div>
+      <div class="teach-card"><h3>Risks</h3><p>No yield or dividend, storage and insurance costs for physical holdings, and prices that can stay flat — or fall — for long stretches.</p></div>
+    </div>
+
+    <div class="dash-label">Live Dashboard · Gold Markets</div>
+    <div class="dash-grid" style="margin-bottom:20px;">
+      <div class="card card-glow">
+        <h4>Live Gold Price</h4>
+        <div class="stat" id="gold-live-price">$—<small>/oz</small></div>
+        <span class="delta" id="gold-live-delta">—</span>
+        <div class="foot-note" id="gold-source-note">Connecting to feed…</div>
+      </div>
+      <div class="card">
+        <h4>Silver</h4>
+        <div class="stat" id="silver-live-price">$—<small>/oz</small></div>
+        <span class="delta" id="silver-live-delta">—</span>
+      </div>
+      <div class="card">
+        <h4>Gold / Silver Ratio</h4>
+        <div class="stat" id="gold-silver-ratio">—</div>
+        <div class="foot-note">Ounces of silver per ounce of gold</div>
+      </div>
+    </div>
+
+    <div class="two-col" style="margin-bottom:20px;">
+      <div class="panel">
+        <div class="panel-title">10-Year Gold Trend (USD/oz) <span class="badge">Illustrative</span></div>
+        <canvas id="gold-history-chart" height="110"></canvas>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Largest Official Gold Reserves</div>
+        <div class="table-scroll"><table class="data-table" id="gold-reserves-table"><thead><tr><th>Country</th><th>Tonnes</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Gold Investment Calculator</div>
+      <div class="two-col">
+        <div>
+          <div class="field-row">
+            <div class="field"><label for="gold-calc-grams">Quantity (grams)</label><input type="number" id="gold-calc-grams" value="50" min="0"></div>
+            <div class="field"><label for="gold-calc-buy">Buy price (per gram, $)</label><input type="number" id="gold-calc-buy" value="60" min="0" step="0.01"></div>
+          </div>
+          <div class="foot-note">Current price auto-fills from the live feed once loaded; you can override it.</div>
+          <div class="field"><label for="gold-calc-now">Current price (per gram, $)</label><input type="number" id="gold-calc-now" value="70" min="0" step="0.01"></div>
+        </div>
+        <div style="display:flex; flex-direction:column; justify-content:center; gap:14px;">
+          <div><span class="foot-note">Invested</span><div class="stat" id="gold-calc-invested">$—</div></div>
+          <div><span class="foot-note">Current value</span><div class="stat" id="gold-calc-value">$—</div></div>
+          <div><span class="foot-note">Gain / loss</span><div class="stat" id="gold-calc-gain">$—</div></div>
+        </div>
+      </div>
+    </div>
+  </div>`
+});
+
+/* ---------------------------------------------------------------------
+   3. STOCK MARKET
+--------------------------------------------------------------------- */
+SECTIONS.push({
+  id: 'stocks',
+  html: `
+  <div class="section-inner">
+    <div class="section-head">
+      <div class="section-index">03</div>
+      <div class="section-title-wrap">
+        <p class="eyebrow">Equities</p>
+        <h2>Stock Market</h2>
+        <p>A share is a sliver of ownership in a real business. The stock market is simply the venue where millions of people continuously re-price that ownership.</p>
+      </div>
+    </div>
+
+    <div class="teach-grid">
+      <div class="teach-card"><h3>Shares &amp; IPOs</h3><p>A share is one unit of company ownership. An IPO is the first time a private company sells shares to the public to raise capital.</p></div>
+      <div class="teach-card"><h3>Market capitalization</h3><p>Share price × shares outstanding — the market's real-time estimate of what the whole company is worth.</p></div>
+      <div class="teach-card"><h3>Bull &amp; bear markets</h3><p>Bull markets are sustained uptrends built on optimism; bear markets are sustained downtrends (typically −20% or more) built on fear or fundamentals.</p></div>
+      <div class="teach-card"><h3>Dividends</h3><p>A portion of profit a company pays directly to shareholders, usually quarterly, as a reward for holding the stock.</p></div>
+      <div class="teach-card"><h3>Cap sizes</h3><p>Large-cap ($10B+) tends to be stable; mid-cap offers a growth/stability blend; small-cap is higher risk and higher potential reward.</p></div>
+      <div class="teach-card"><h3>Indices</h3><p>A basket of stocks — like the S&amp;P 500 or NIFTY 50 — used as a single number to track how "the market" is doing overall.</p></div>
+      <div class="teach-card"><h3>How exchanges work</h3><p>Exchanges match buy and sell orders electronically in fractions of a second, using the highest bid and lowest ask to set the current price.</p></div>
+      <div class="teach-card"><h3>Blue-chip companies</h3><p>Large, established, financially sound companies with a long record of stable performance — the "safer" end of equities.</p></div>
+    </div>
+
+    <div class="dash-label">Live Dashboard · Equities <span class="badge" style="margin-left:8px;">Demo Feed — add a key</span></div>
+    <div class="two-col" style="margin-bottom:16px;">
+      <div class="panel">
+        <div class="panel-title">Top Gainers</div>
+        <div class="table-scroll"><table class="data-table" id="gainers-table"><thead><tr><th>Symbol</th><th>Price</th><th>Chg %</th></tr></thead><tbody></tbody></table></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Top Losers</div>
+        <div class="table-scroll"><table class="data-table" id="losers-table"><thead><tr><th>Symbol</th><th>Price</th><th>Chg %</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-bottom:16px;">
+      <div class="panel-title">Interactive Sector Heatmap <span class="badge">Demo Feed</span></div>
+      <div class="heatmap" id="stock-heatmap"></div>
+    </div>
+
+    <div class="dash-grid">
+      <div class="card"><h4>Most Active</h4><div id="most-active-list" style="font-family:var(--font-mono); font-size:0.85rem; display:flex; flex-direction:column; gap:8px;"></div></div>
+      <div class="card"><h4>NYSE</h4><div class="stat" id="mkt-nyse">—</div></div>
+      <div class="card"><h4>NASDAQ</h4><div class="stat" id="mkt-nasdaq">—</div></div>
+      <div class="card"><h4>BSE / NSE (India)</h4><div class="stat" id="mkt-india">—</div></div>
+    </div>
+  </div>`
+});
+
+/* ---------------------------------------------------------------------
+   4. CRYPTOCURRENCY
+--------------------------------------------------------------------- */
+SECTIONS.push({
+  id: 'crypto',
+  html: `
+  <div class="section-inner">
+    <div class="section-head">
+      <div class="section-index">04</div>
+      <div class="section-title-wrap">
+        <p class="eyebrow">Digital Assets</p>
+        <h2>Cryptocurrency</h2>
+        <p>A public, tamper-resistant ledger that lets strangers transact without a bank in the middle — and the first genuinely new asset class in a generation.</p>
+      </div>
+    </div>
+
+    <div class="teach-grid">
+      <div class="teach-card"><h3>Blockchain</h3><p>A distributed, append-only ledger duplicated across thousands of computers, making past records extremely difficult to alter.</p></div>
+      <div class="teach-card"><h3>Bitcoin &amp; Ethereum</h3><p>Bitcoin is digital scarcity — a fixed-supply store of value. Ethereum is a programmable ledger that runs smart contracts and applications.</p></div>
+      <div class="teach-card"><h3>Wallets</h3><p>Software or hardware that stores the private keys proving ownership of coins — lose the keys, lose the funds, with no customer support to call.</p></div>
+      <div class="teach-card"><h3>Mining &amp; validation</h3><p>Proof of Work has computers compete to solve puzzles to add blocks; Proof of Stake has validators post collateral instead, using far less energy.</p></div>
+      <div class="teach-card"><h3>Stablecoins</h3><p>Tokens pegged to a stable asset like the US dollar, used to move value on-chain without crypto's usual price swings.</p></div>
+      <div class="teach-card"><h3>Advantages &amp; risks</h3><p>24/7 global markets and no intermediary, weighed against extreme volatility, irreversible mistakes, and evolving regulation.</p></div>
+    </div>
+
+    <div class="dash-label">Live Dashboard · Crypto <span class="badge" style="margin-left:8px;">Live via CoinGecko</span></div>
+    <div class="dash-grid" style="margin-bottom:16px;">
+      <div class="card card-glow"><h4>Total Market Cap</h4><div class="stat" id="crypto-mcap">—</div><span class="delta" id="crypto-mcap-delta"></span></div>
+      <div class="card"><h4>24h Volume</h4><div class="stat" id="crypto-vol">—</div></div>
+      <div class="card"><h4>BTC Dominance</h4><div class="stat" id="btc-dominance">—</div></div>
+      <div class="card"><h4>Trending Now</h4><div id="trending-coins" style="font-size:0.85rem; color:var(--muted); font-family:var(--font-mono);">—</div></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Top Coins by Market Cap</div>
+      <div class="table-scroll"><table class="data-table" id="crypto-table">
+        <thead><tr><th>#</th><th>Coin</th><th>Price</th><th>24h</th><th>Market Cap</th><th>Volume</th></tr></thead>
+        <tbody><tr><td colspan="6" style="color:var(--muted);">Loading live data…</td></tr></tbody>
+      </table></div>
+    </div>
+  </div>`
+});
+
+/* ---------------------------------------------------------------------
+   5. TRADING
+--------------------------------------------------------------------- */
+SECTIONS.push({
+  id: 'trading',
+  html: `
+  <div class="section-inner">
+    <div class="section-head">
+      <div class="section-index">05</div>
+      <div class="section-title-wrap">
+        <p class="eyebrow">Reading Price</p>
+        <h2>Trading</h2>
+        <p>Trading is the discipline of reading short-term price behavior — and, more importantly, managing risk when you're inevitably wrong.</p>
+      </div>
+    </div>
+
+    <div class="teach-grid">
+      <div class="teach-card"><h3>Candlesticks</h3><p>Each candle shows open, high, low, and close for a period — a compact story of the battle between buyers and sellers.</p></div>
+      <div class="teach-card"><h3>Support &amp; resistance</h3><p>Price levels where buying or selling pressure has repeatedly stalled a move, often acting as floors and ceilings.</p></div>
+      <div class="teach-card"><h3>Trend &amp; breakout</h3><p>A trend is the market's prevailing direction; a breakout is price decisively moving past a support/resistance level, often with rising volume.</p></div>
+      <div class="teach-card"><h3>Risk management</h3><p>Sizing positions and setting stop losses so that no single trade can meaningfully damage the account — the actual job of a trader.</p></div>
+      <div class="teach-card"><h3>Stop loss &amp; take profit</h3><p>Pre-set exit orders that cap downside and lock in gains automatically, removing emotion from the decision in the moment.</p></div>
+      <div class="teach-card"><h3>Trading psychology</h3><p>Fear and greed cause most losses that bad analysis didn't — discipline and a written plan are what separate traders from gamblers.</p></div>
+      <div class="teach-card"><h3>Styles</h3><p>Scalping (seconds–minutes), day trading (intraday), swing trading (days–weeks), and position trading (months–years) — same markets, different time horizons.</p></div>
+    </div>
+
+    <div class="dash-label">Live Dashboard · Candlestick Chart <span class="badge" style="margin-left:8px;">Live via CoinGecko OHLC</span></div>
+    <div class="panel">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; margin-bottom:18px;">
+        <div class="panel-title" style="margin:0;">BTC/USD</div>
+        <div class="filter-row" style="margin:0;" id="candle-timeframe">
+          <button class="chip-btn active" data-days="1">1D</button>
+          <button class="chip-btn" data-days="7">7D</button>
+          <button class="chip-btn" data-days="30">30D</button>
+          <button class="chip-btn" data-days="90">90D</button>
+        </div>
+      </div>
+      <div id="candle-wrap" style="position:relative; height:380px;">
+        <canvas id="candle-canvas"></canvas>
+      </div>
+      <div class="foot-note" id="candle-note" style="margin-top:12px;">Loading candles…</div>
+    </div>
+  </div>`
+});
+
+/* ---------------------------------------------------------------------
+   6. INVESTING
+--------------------------------------------------------------------- */
+SECTIONS.push({
+  id: 'investing',
+  html: `
+  <div class="section-inner">
+    <div class="section-head">
+      <div class="section-index">06</div>
+      <div class="section-title-wrap">
+        <p class="eyebrow">Building Wealth</p>
+        <h2>Investing</h2>
+        <p>Trading manages short-term risk. Investing harnesses time — letting compounding, diversification, and patience do most of the work.</p>
+      </div>
+    </div>
+
+    <div class="teach-grid">
+      <div class="teach-card"><h3>Compound interest</h3><p>Interest earned on interest already earned — the mechanism Einstein reputedly called the eighth wonder of the world.</p></div>
+      <div class="teach-card"><h3>Index funds &amp; ETFs</h3><p>Low-cost baskets that track an entire market, giving broad diversification without picking individual winners.</p></div>
+      <div class="teach-card"><h3>Mutual funds</h3><p>Professionally managed pooled investments — actively trying to beat the market, usually for a higher fee than an index fund.</p></div>
+      <div class="teach-card"><h3>Diversification</h3><p>Spreading capital across assets that don't move in lockstep, so one bad outcome doesn't sink the whole portfolio.</p></div>
+      <div class="teach-card"><h3>Asset allocation</h3><p>The split between stocks, bonds, gold, cash, and alternatives — the single biggest driver of a portfolio's long-run risk and return.</p></div>
+      <div class="teach-card"><h3>Retirement planning</h3><p>Working backward from a future income target to decide how much to invest today, and in what, to get there.</p></div>
+    </div>
+
+    <div class="dash-label">Live Dashboard · Calculators</div>
+    <div class="three-col" style="margin-bottom:16px; align-items:stretch;">
+      <div class="panel">
+        <div class="panel-title">Compound Interest</div>
+        <div class="field"><label for="ci-principal">Initial amount ($)</label><input type="number" id="ci-principal" value="10000"></div>
+        <div class="field-row">
+          <div class="field"><label for="ci-rate">Annual return (%)</label><input type="number" id="ci-rate" value="8" step="0.1"></div>
+          <div class="field"><label for="ci-years">Years</label><input type="number" id="ci-years" value="20"></div>
+        </div>
+        <div class="foot-note">Future value</div>
+        <div class="stat" id="ci-result">$—</div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">SIP Calculator</div>
+        <div class="field"><label for="sip-amount">Monthly investment ($)</label><input type="number" id="sip-amount" value="500"></div>
+        <div class="field-row">
+          <div class="field"><label for="sip-rate">Expected return (%)</label><input type="number" id="sip-rate" value="10" step="0.1"></div>
+          <div class="field"><label for="sip-years">Years</label><input type="number" id="sip-years" value="15"></div>
+        </div>
+        <div class="foot-note">Maturity value</div>
+        <div class="stat" id="sip-result">$—</div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Portfolio Allocation</div>
+        <div class="range-row"><span>Stocks</span><span id="alloc-stocks-val">50%</span></div>
+        <input type="range" id="alloc-stocks" min="0" max="100" value="50">
+        <div class="range-row" style="margin-top:12px;"><span>Bonds</span><span id="alloc-bonds-val">25%</span></div>
+        <input type="range" id="alloc-bonds" min="0" max="100" value="25">
+        <div class="range-row" style="margin-top:12px;"><span>Gold</span><span id="alloc-gold-val">15%</span></div>
+        <input type="range" id="alloc-gold" min="0" max="100" value="15">
+        <div class="range-row" style="margin-top:12px;"><span>Crypto</span><span id="alloc-crypto-val">10%</span></div>
+        <input type="range" id="alloc-crypto" min="0" max="100" value="10">
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-title">Growth Projection</div>
+        <canvas id="investing-growth-chart" height="110"></canvas>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Allocation Mix</div>
+        <canvas id="allocation-pie-chart" height="200"></canvas>
+      </div>
+    </div>
+  </div>`
+});
+
+/* ---------------------------------------------------------------------
+   7. BUSINESS
+--------------------------------------------------------------------- */
+SECTIONS.push({
+  id: 'business',
+  html: `
+  <div class="section-inner">
+    <div class="section-head">
+      <div class="section-index">07</div>
+      <div class="section-title-wrap">
+        <p class="eyebrow">Building Value</p>
+        <h2>Business</h2>
+        <p>Every public company on the ticker started as an idea, a spreadsheet, and a founder guessing at demand. The mechanics are learnable.</p>
+      </div>
+    </div>
+
+    <div class="teach-grid">
+      <div class="teach-card"><h3>Finding ideas &amp; validation</h3><p>Good ideas usually come from a founder's own frustration; validation means testing whether strangers will actually pay before you build much.</p></div>
+      <div class="teach-card"><h3>MVP</h3><p>A minimum viable product — the smallest version of a solution that lets you learn from real customers as fast as possible.</p></div>
+      <div class="teach-card"><h3>Branding &amp; marketing</h3><p>Branding is the promise a company makes; marketing is how it reaches the people who might care about that promise.</p></div>
+      <div class="teach-card"><h3>Customer acquisition</h3><p>The channels and cost required to turn a stranger into a paying customer — the number every growth decision revolves around.</p></div>
+      <div class="teach-card"><h3>Pricing</h3><p>Set too low, it signals cheapness and starves margin; set too high without proof of value, it kills conversion. Pricing is a positioning decision, not just a math one.</p></div>
+      <div class="teach-card"><h3>Cash flow &amp; profit</h3><p>Profit is an accounting concept; cash flow is what's actually in the bank. Profitable companies still die from running out of cash.</p></div>
+      <div class="teach-card"><h3>Scaling</h3><p>Growing revenue faster than costs — usually by removing whatever manual step currently caps how fast the business can grow.</p></div>
+    </div>
+
+    <div class="dash-label">Live Dashboard · Business Modeling</div>
+    <div class="two-col" style="margin-bottom:16px;">
+      <div class="panel">
+        <div class="panel-title">Break-Even Calculator</div>
+        <div class="field"><label for="be-fixed">Fixed costs / month ($)</label><input type="number" id="be-fixed" value="8000"></div>
+        <div class="field-row">
+          <div class="field"><label for="be-price">Price per unit ($)</label><input type="number" id="be-price" value="40"></div>
+          <div class="field"><label for="be-varcost">Variable cost / unit ($)</label><input type="number" id="be-varcost" value="15"></div>
+        </div>
+        <div class="foot-note">Break-even volume</div>
+        <div class="stat" id="be-units">— units/mo</div>
+        <div class="foot-note" style="margin-top:6px;">Break-even revenue</div>
+        <div class="stat" id="be-revenue">$—</div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Revenue Projection</div>
+        <div class="field-row">
+          <div class="field"><label for="rev-start">Starting monthly revenue ($)</label><input type="number" id="rev-start" value="5000"></div>
+          <div class="field"><label for="rev-growth">Monthly growth (%)</label><input type="number" id="rev-growth" value="12" step="0.5"></div>
+        </div>
+        <canvas id="revenue-chart" height="150"></canvas>
+      </div>
+    </div>
+
+    <div class="dash-grid">
+      <div class="card"><h4>Startup KPI · Burn Rate</h4><div class="stat">$18.4k<small>/mo</small></div><div class="foot-note">Illustrative sample company</div></div>
+      <div class="card"><h4>Startup KPI · Runway</h4><div class="stat">14.2<small> months</small></div></div>
+      <div class="card"><h4>Startup KPI · CAC</h4><div class="stat">$62<small>/customer</small></div></div>
+      <div class="card"><h4>Startup KPI · LTV:CAC</h4><div class="stat">3.4<small>×</small></div></div>
+    </div>
+  </div>`
+});
+
+/* ---------------------------------------------------------------------
+   8. GLOBAL ECONOMY
+--------------------------------------------------------------------- */
+SECTIONS.push({
+  id: 'economy',
+  html: `
+  <div class="section-inner">
+    <div class="section-head">
+      <div class="section-index">08</div>
+      <div class="section-title-wrap">
+        <p class="eyebrow">The Big Picture</p>
+        <h2>Global Economy</h2>
+        <p>Zoom out far enough and every stock, coin, and gold bar is downstream of a handful of macro forces: growth, prices, rates, and trade.</p>
+      </div>
+    </div>
+
+    <div class="teach-grid">
+      <div class="teach-card"><h3>GDP</h3><p>The total value of goods and services a country produces in a period — the standard scoreboard for economic size and growth.</p></div>
+      <div class="teach-card"><h3>Interest rates</h3><p>The price of borrowing money, set largely by central banks, which ripples into mortgages, business loans, and stock valuations.</p></div>
+      <div class="teach-card"><h3>Recession</h3><p>A sustained, broad-based decline in economic activity — commonly flagged after two consecutive quarters of shrinking GDP.</p></div>
+      <div class="teach-card"><h3>Employment</h3><p>The share of the workforce with jobs; a lagging but closely watched signal of economic health and consumer spending power.</p></div>
+      <div class="teach-card"><h3>Trade, imports &amp; exports</h3><p>What a country buys from and sells to the rest of the world — and the balance between the two shapes its currency and industry.</p></div>
+      <div class="teach-card"><h3>Government debt</h3><p>What a country owes, typically as bonds sold to investors — manageable in moderation, destabilizing if it grows faster than the economy.</p></div>
+    </div>
+
+    <div class="dash-label">Live Dashboard · Macro</div>
+    <div class="two-col" style="margin-bottom:16px;">
+      <div class="panel">
+        <div class="panel-title">GDP Rankings (Nominal, approx.) <span class="badge">Illustrative</span></div>
+        <div class="table-scroll"><table class="data-table" id="gdp-table"><thead><tr><th>Country</th><th>GDP</th></tr></thead><tbody></tbody></table></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Major Central Bank Rates <span class="badge">Illustrative</span></div>
+        <div class="table-scroll"><table class="data-table" id="rates-table"><thead><tr><th>Central Bank</th><th>Rate</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-title">Global Market Status</div>
+        <div id="global-exchange-status" style="display:flex; flex-direction:column; gap:10px;"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Economic Calendar <span class="badge">Illustrative</span></div>
+        <div id="econ-calendar" style="display:flex; flex-direction:column; gap:12px;"></div>
+      </div>
+    </div>
+  </div>`
+});
+
+/* ---------------------------------------------------------------------
+   9. AI IN FINANCE
+--------------------------------------------------------------------- */
+SECTIONS.push({
+  id: 'ai-finance',
+  html: `
+  <div class="section-inner">
+    <div class="section-head">
+      <div class="section-index">09</div>
+      <div class="section-title-wrap">
+        <p class="eyebrow">The New Layer</p>
+        <h2>AI in Finance</h2>
+        <p>Machine learning now sits underneath most of modern finance — pricing risk, spotting fraud, and executing trades faster than any human could.</p>
+      </div>
+    </div>
+
+    <div class="teach-grid">
+      <div class="teach-card"><h3>Algorithmic trading</h3><p>Pre-programmed strategies that execute trades automatically based on price, timing, or statistical signals — no human in the loop.</p></div>
+      <div class="teach-card"><h3>Machine learning</h3><p>Models that learn patterns from historical data to forecast prices, risk, or behavior, improving as more data arrives.</p></div>
+      <div class="teach-card"><h3>Fraud detection</h3><p>Real-time anomaly detection that flags transactions inconsistent with a user's normal behavior, often within milliseconds.</p></div>
+      <div class="teach-card"><h3>Risk analysis</h3><p>Models that estimate the probability and size of losses across a portfolio, stress-testing it against thousands of scenarios.</p></div>
+      <div class="teach-card"><h3>Portfolio optimization</h3><p>Algorithms that balance expected return against risk to suggest the most efficient mix of assets for a given goal.</p></div>
+      <div class="teach-card"><h3>The road ahead</h3><p>Expect more personalized advice, faster fraud response, and markets that react to news within seconds — alongside new questions about transparency and systemic risk.</p></div>
+    </div>
+
+    <div class="dash-label">Live Dashboard · Sentiment <span class="badge" style="margin-left:8px;">Demo Feed</span></div>
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-title">AI Market Sentiment</div>
+        <div class="gauge-wrap">
+          <canvas id="sentiment-gauge" width="280" height="160"></canvas>
+          <div class="gauge-label" id="sentiment-label">Neutral</div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Trending Financial Topics</div>
+        <div id="topic-cloud" style="display:flex; flex-wrap:wrap; gap:10px;"></div>
+      </div>
+    </div>
+  </div>`
+});
+
+/* ---------------------------------------------------------------------
+   10. FINANCIAL ACADEMY
+--------------------------------------------------------------------- */
+SECTIONS.push({
+  id: 'academy',
+  html: `
+  <div class="section-inner">
+    <div class="section-head">
+      <div class="section-index">10</div>
+      <div class="section-title-wrap">
+        <p class="eyebrow">Your Path</p>
+        <h2>Financial Academy</h2>
+        <p>A structured roadmap from first principles to professional-level fluency. Expand a level to see what it covers.</p>
+      </div>
+    </div>
+    <div id="academy-accordion"></div>
+  </div>`
+});
+
+/* ---------------------------------------------------------------------
+   11. FINANCIAL NEWS
+--------------------------------------------------------------------- */
+SECTIONS.push({
+  id: 'news',
+  html: `
+  <div class="section-inner">
+    <div class="section-head">
+      <div class="section-index">11</div>
+      <div class="section-title-wrap">
+        <p class="eyebrow">Stay Current</p>
+        <h2>Financial News</h2>
+        <p>Curated, categorized headlines. <span class="badge">Demo Feed — connect a news API for live headlines</span></p>
+      </div>
+    </div>
+    <div class="filter-row">
+      <input type="text" id="news-search" placeholder="Search headlines…" style="flex:1; min-width:220px; background:var(--bg2); border:1px solid var(--hairline); border-radius:999px; padding:10px 18px; color:var(--text); font-size:0.85rem;">
+    </div>
+    <div class="filter-row" id="news-filters"></div>
+    <div class="news-list" id="news-list"></div>
+  </div>`
+});
+
+/* ---------------------------------------------------------------------
+   12. PERSONAL WATCHLIST
+--------------------------------------------------------------------- */
+SECTIONS.push({
+  id: 'watchlist',
+  html: `
+  <div class="section-inner">
+    <div class="section-head">
+      <div class="section-index">12</div>
+      <div class="section-title-wrap">
+        <p class="eyebrow">Track What Matters</p>
+        <h2>Personal Watchlist</h2>
+        <p>Add stocks, crypto, currencies, gold, or indices to track in one place. Saved for this session <span class="badge">Live prices for crypto</span></p>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="watch-add">
+        <select id="watch-select"></select>
+        <button class="btn btn-primary" id="watch-add-btn" style="flex-shrink:0;">Add to Watchlist</button>
+      </div>
+      <div id="watch-table-wrap"></div>
+    </div>
+  </div>`
+});
+
+/* ---------------------------------------------------------------------
+   13. GLOBAL FINANCIAL OBSERVATORY (standalone full-bleed section)
+--------------------------------------------------------------------- */
+SECTIONS.push({
+  id: 'observatory',
+  fullBleed: true,
+  html: `
+  <div class="observatory-inner">
+    <div class="section-inner">
+      <div class="section-head">
+        <div class="section-index">13</div>
+        <div class="section-title-wrap">
+          <p class="eyebrow">The Whole Picture</p>
+          <h2>Global Financial Observatory</h2>
+          <p>An interactive Earth linking the world's major financial hubs. Drag to rotate, scroll to zoom, hover a hub for a snapshot.</p>
+        </div>
+      </div>
+      <div id="globe-canvas-wrap">
+        <div class="globe-tooltip" id="globe-tooltip"></div>
+        <div class="globe-fallback" id="globe-fallback">Your browser couldn't initialize the 3D globe. Try a different browser or enable hardware acceleration.</div>
+      </div>
+      <p class="globe-hint">Hubs shown: New York · London · Tokyo · Hong Kong · Frankfurt · Mumbai · Shanghai · Singapore · Sydney · Zürich</p>
+    </div>
+  </div>`
+});
+
+/* ---------------------------------------------------------------------
+   REFERENCE DATA
+--------------------------------------------------------------------- */
+const DATA = {
+  goldReserves: [
+    ['United States', 8133], ['Germany', 3352], ['Italy', 2452], ['France', 2437],
+    ['Russia', 2333], ['China', 2264], ['Switzerland', 1040], ['Japan', 846],
+    ['India', 840], ['Netherlands', 612]
+  ],
+  gdpRankings: [
+    ['United States', '$27.4T'], ['China', '$18.3T'], ['Germany', '$4.7T'],
+    ['Japan', '$4.1T'], ['India', '$3.9T'], ['United Kingdom', '$3.5T'],
+    ['France', '$3.1T'], ['Brazil', '$2.3T'], ['Italy', '$2.3T'], ['Canada', '$2.2T']
+  ],
+  centralBankRates: [
+    ['US Federal Reserve', '4.25% – 4.50%'], ['European Central Bank', '3.15%'],
+    ['Bank of England', '4.50%'], ['Reserve Bank of India', '6.25%'],
+    ['Bank of Japan', '0.50%'], ["People's Bank of China", '3.10%'],
+    ['Swiss National Bank', '0.50%']
+  ],
+  econCalendar: [
+    ['Mon', 'US ISM Manufacturing PMI', 'High impact'],
+    ['Tue', 'RBI Interest Rate Decision', 'High impact'],
+    ['Wed', 'US CPI (Inflation) Release', 'High impact'],
+    ['Thu', 'ECB Monetary Policy Statement', 'Medium impact'],
+    ['Fri', 'US Non-Farm Payrolls', 'High impact']
+  ],
+  topics: ['Rate cuts', 'AI capex', 'Gold rally', 'Bitcoin ETFs', 'Chip exports',
+    'Green energy', 'Sovereign debt', 'Stablecoins', 'De-dollarization', 'Earnings season'],
+  academy: [
+    { level: 'Beginner', topics: ['What is money', 'Budgeting basics', 'Saving vs investing', 'Bank accounts & interest', 'Understanding inflation', 'Reading a paycheck'] },
+    { level: 'Intermediate', topics: ['Stock market fundamentals', 'Index funds & ETFs', 'Compound interest', 'Diversification', 'Understanding risk', 'Reading financial news'] },
+    { level: 'Advanced', topics: ['Technical analysis', 'Options basics', 'Portfolio construction', 'Macro indicators', 'Valuation models', 'Tax-efficient investing'] },
+    { level: 'Professional', topics: ['Derivatives & hedging', 'Quantitative strategies', 'Algorithmic trading', 'Behavioral finance', 'Alternative assets', 'Global macro strategy'] }
+  ],
+  news: [
+    { cat: 'Stocks', title: 'Blue-chip indices grind to fresh highs as earnings beat expectations', time: '2h ago' },
+    { cat: 'Crypto', title: 'Bitcoin holds key support level as ETF inflows continue', time: '3h ago' },
+    { cat: 'Economy', title: 'Inflation print comes in softer than forecast, easing rate-cut bets', time: '5h ago' },
+    { cat: 'Business', title: 'Wave of mid-cap IPOs signals reopening risk appetite', time: '7h ago' },
+    { cat: 'Technology', title: 'AI infrastructure spending reshapes capex across the S&P 500', time: '9h ago' },
+    { cat: 'Global Markets', title: 'Asian markets mixed as regional currencies firm against the dollar', time: '11h ago' },
+    { cat: 'Crypto', title: 'Ethereum network activity climbs on renewed DeFi interest', time: '13h ago' },
+    { cat: 'Stocks', title: 'Energy sector lags broader market on softer crude prices', time: '15h ago' }
+  ],
+  watchOptions: [
+    { sym: 'AAPL', name: 'Apple Inc.', type: 'Stock' }, { sym: 'MSFT', name: 'Microsoft Corp.', type: 'Stock' },
+    { sym: 'NVDA', name: 'NVIDIA Corp.', type: 'Stock' }, { sym: 'TSLA', name: 'Tesla Inc.', type: 'Stock' },
+    { sym: 'bitcoin', name: 'Bitcoin', type: 'Crypto' }, { sym: 'ethereum', name: 'Ethereum', type: 'Crypto' },
+    { sym: 'solana', name: 'Solana', type: 'Crypto' },
+    { sym: 'XAU', name: 'Gold', type: 'Commodity' }, { sym: 'XAG', name: 'Silver', type: 'Commodity' },
+    { sym: 'USDINR', name: 'USD / INR', type: 'Currency' }, { sym: 'EURUSD', name: 'EUR / USD', type: 'Currency' },
+    { sym: 'NIFTY', name: 'Nifty 50', type: 'Index' }, { sym: 'SPX', name: 'S&P 500', type: 'Index' }
+  ],
+  hubs: [
+    { name: 'New York', lat: 40.7, lon: -74.0, exch: 'NYSE / NASDAQ', tz: 'America/New_York', open: 9.5, close: 16 },
+    { name: 'London', lat: 51.5, lon: -0.12, exch: 'London Stock Exchange', tz: 'Europe/London', open: 8, close: 16.5 },
+    { name: 'Tokyo', lat: 35.68, lon: 139.7, exch: 'Tokyo Stock Exchange', tz: 'Asia/Tokyo', open: 9, close: 15 },
+    { name: 'Hong Kong', lat: 22.3, lon: 114.17, exch: 'Hong Kong Exchange', tz: 'Asia/Hong_Kong', open: 9.5, close: 16 },
+    { name: 'Frankfurt', lat: 50.1, lon: 8.68, exch: 'Deutsche Börse', tz: 'Europe/Berlin', open: 9, close: 17.5 },
+    { name: 'Mumbai', lat: 19.07, lon: 72.87, exch: 'BSE / NSE', tz: 'Asia/Kolkata', open: 9.25, close: 15.5 },
+    { name: 'Shanghai', lat: 31.23, lon: 121.47, exch: 'Shanghai Stock Exchange', tz: 'Asia/Shanghai', open: 9.5, close: 15 },
+    { name: 'Singapore', lat: 1.35, lon: 103.82, exch: 'Singapore Exchange', tz: 'Asia/Singapore', open: 9, close: 17 },
+    { name: 'Sydney', lat: -33.87, lon: 151.21, exch: 'Australian Securities Exchange', tz: 'Australia/Sydney', open: 10, close: 16 },
+    { name: 'Zürich', lat: 47.37, lon: 8.54, exch: 'SIX Swiss Exchange', tz: 'Europe/Zurich', open: 9, close: 17.3 }
+  ]
+};
+
+</script>
+<script>
+/* ==========================================================================
+   ARTISTRY MARKETS — APPLICATION LAYER
+   ========================================================================== */
+
+/* --------------------------------------------------------------------
+   0. CONFIG — insert your own API keys here. The app runs fully on
+   free, no-key endpoints (CoinGecko, Frankfurter, gold-api.com) and
+   falls back to clearly-labeled demo data anywhere a paid key is required.
+-------------------------------------------------------------------- */
+const CONFIG = {
+  // Free, no key required:
+  COINGECKO_BASE: 'https://api.coingecko.com/api/v3',
+  FRANKFURTER_BASE: 'https://api.frankfurter.dev/v1',
+  GOLD_API_BASE: 'https://api.gold-api.com',
+  // Paid / key-required — insert your own key and wire up the fetch calls
+  // marked "DEMO FEED" below to go live:
+  ALPHA_VANTAGE_KEY: 'YOUR_ALPHA_VANTAGE_KEY',   // https://www.alphavantage.co (stocks)
+  NEWS_API_KEY: 'YOUR_NEWSAPI_KEY',               // https://newsapi.org (financial news)
+  REFRESH_MS: 45000
+};
+
+const $ = (sel, ctx) => (ctx || document).querySelector(sel);
+const $$ = (sel, ctx) => Array.from((ctx || document).querySelectorAll(sel));
+
+function fmtUSD(n, decimals) {
+  if (n === null || n === undefined || isNaN(n)) return '$—';
+  const d = decimals === undefined ? 2 : decimals;
+  return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+}
+function fmtCompact(n) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 2 }).format(n);
+}
+function fmtPct(n) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  const s = n >= 0 ? '+' : '';
+  return s + n.toFixed(2) + '%';
+}
+function seededRandom(seed) {
+  let s = seed % 2147483647;
+  if (s <= 0) s += 2147483646;
+  return function () { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
+}
+function toast(msg) {
+  const t = $('#toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast._tm);
+  toast._tm = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+/* --------------------------------------------------------------------
+   1. RENDER SECTIONS FROM content.js
+-------------------------------------------------------------------- */
+function renderSections() {
+  const main = $('#main-content');
+  const frag = document.createDocumentFragment();
+  SECTIONS.forEach(sec => {
+    const el = document.createElement('section');
+    el.id = sec.id;
+    el.className = 'section' + (sec.fullBleed ? ' section-full' : '');
+    el.innerHTML = sec.html;
+    frag.appendChild(el);
+  });
+  main.appendChild(frag);
+}
+
+/* --------------------------------------------------------------------
+   2. LOADER
+-------------------------------------------------------------------- */
+function initLoader() {
+  window.addEventListener('load', () => {
+    setTimeout(() => $('#loader').classList.add('hidden'), 500);
+  });
+  // Safety net in case 'load' already fired or assets stall
+  setTimeout(() => { const l = $('#loader'); if (l) l.classList.add('hidden'); }, 3500);
+}
+
+/* --------------------------------------------------------------------
+   3. NAV — always-visible scrollable strip + scroll spy
+-------------------------------------------------------------------- */
+function initNav() {
+  const navLinkEls = $$('#nav-links a[data-nav]');
+  const sectionEls = SECTIONS.map(s => document.getElementById(s.id)).filter(Boolean);
+  const spy = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const activeLink = navLinkEls.find(a => a.getAttribute('href') === '#' + entry.target.id);
+        navLinkEls.forEach(a => a.classList.toggle('active', a === activeLink));
+        if (activeLink) activeLink.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+      }
+    });
+  }, { rootMargin: '-40% 0px -55% 0px', threshold: 0 });
+  sectionEls.forEach(el => spy.observe(el));
+}
+
+/* --------------------------------------------------------------------
+   4. REVEAL ON SCROLL
+-------------------------------------------------------------------- */
+function initReveal() {
+  const targets = $$('[data-reveal]');
+  const heroTargets = $$('#hero [data-reveal]');
+  // Hero reveals immediately on load
+  heroTargets.forEach((el, i) => setTimeout(() => el.classList.add('reveal-on'), 200 + i * 120));
+
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('reveal-on');
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  targets.forEach(el => { if (!el.closest('#hero')) io.observe(el); });
+
+  // simple fade/rise for cards & panels as they enter view
+  const softTargets = $$('.card, .panel, .teach-card, .accordion-item, .news-item');
+  const io2 = new IntersectionObserver((entries) => {
+    entries.forEach((entry, idx) => {
+      if (entry.isIntersecting) {
+        entry.target.style.transition = 'opacity .6s var(--ease), transform .6s var(--ease)';
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'none';
+        io2.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  softTargets.forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(16px)';
+    io2.observe(el);
+  });
+}
+
+/* --------------------------------------------------------------------
+   5. HERO CANVAS — animated world map with glowing hubs + data arcs
+-------------------------------------------------------------------- */
+function initHeroMap() {
+  const canvas = $('#hero-map');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let w, h, dpr;
+  const hubs = DATA.hubs;
+
+  function project(lat, lon) {
+    // simple equirectangular projection onto the hero canvas
+    const x = (lon + 180) / 360 * w;
+    const y = (90 - lat) / 180 * h;
+    return [x, y];
+  }
+
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    w = canvas.clientWidth; h = canvas.clientHeight;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // background dot grid (suggests a world map without needing a texture)
+  const dots = [];
+  const cols = 90, rows = 45;
+  for (let i = 0; i < cols; i++) {
+    for (let j = 0; j < rows; j++) {
+      // fade out near poles, sparse ocean-like noise so it doesn't look like a grid
+      const jitter = Math.sin(i * 12.9898 + j * 78.233) * 43758.5453;
+      const n = jitter - Math.floor(jitter);
+      if (n > 0.42) continue;
+      dots.push({ i, j });
+    }
+  }
+
+  const arcs = [];
+  for (let i = 0; i < hubs.length; i++) {
+    for (let j = i + 1; j < hubs.length; j++) {
+      if (Math.random() < 0.35) arcs.push([hubs[i], hubs[j], Math.random() * 3]);
+    }
+  }
+
+  let t = 0;
+  function draw() {
+    t += 0.006;
+    ctx.clearRect(0, 0, w, h);
+
+    // dot grid
+    ctx.fillStyle = 'rgba(212,175,55,0.10)';
+    dots.forEach(d => {
+      const x = (d.i / cols) * w;
+      const y = (d.j / rows) * h;
+      ctx.beginPath();
+      ctx.arc(x, y, 1, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // arcs between hubs
+    arcs.forEach(([a, b, phase]) => {
+      const [x1, y1] = project(a.lat, a.lon);
+      const [x2, y2] = project(b.lat, b.lon);
+      const mx = (x1 + x2) / 2, my = (y1 + y2) / 2 - Math.abs(x2 - x1) * 0.15;
+      ctx.strokeStyle = 'rgba(212,175,55,0.16)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.quadraticCurveTo(mx, my, x2, y2);
+      ctx.stroke();
+
+      // traveling pulse along the arc
+      const pct = (t * 0.15 + phase) % 1;
+      const px = (1 - pct) * (1 - pct) * x1 + 2 * (1 - pct) * pct * mx + pct * pct * x2;
+      const py = (1 - pct) * (1 - pct) * y1 + 2 * (1 - pct) * pct * my + pct * pct * y2;
+      ctx.fillStyle = 'rgba(212,175,55,0.9)';
+      ctx.beginPath();
+      ctx.arc(px, py, 1.8, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // hub nodes
+    hubs.forEach((hub, idx) => {
+      const [x, y] = project(hub.lat, hub.lon);
+      const pulse = (Math.sin(t * 2 + idx) + 1) / 2;
+      ctx.beginPath();
+      ctx.arc(x, y, 3 + pulse * 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(212,175,55,' + (0.12 + pulse * 0.12) + ')';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(x, y, 2.4, 0, Math.PI * 2);
+      ctx.fillStyle = '#D4AF37';
+      ctx.fill();
+    });
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+/* --------------------------------------------------------------------
+   6. HERO CLOCK + MARKET STATUS PILL
+-------------------------------------------------------------------- */
+function isExchangeOpen(hub, now) {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: hub.tz, hour: 'numeric', minute: 'numeric', hour12: false, weekday: 'short'
+    }).formatToParts(now);
+    const wk = parts.find(p => p.type === 'weekday').value;
+    const hh = parseInt(parts.find(p => p.type === 'hour').value, 10);
+    const mm = parseInt(parts.find(p => p.type === 'minute').value, 10);
+    const hourFloat = hh + mm / 60;
+    const isWeekday = !['Sat', 'Sun'].includes(wk);
+    return isWeekday && hourFloat >= hub.open && hourFloat < hub.close;
+  } catch (e) {
+    return false;
+  }
+}
+
+function initClockAndStatus() {
+  const clockEl = $('#hero-clock');
+  const pill = $('#market-status-pill');
+  const pillText = pill.querySelector('.status-text');
+
+  function tick() {
+    const now = new Date();
+    if (clockEl) {
+      clockEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+    const nyse = DATA.hubs.find(h => h.name === 'New York');
+    const open = isExchangeOpen(nyse, now);
+    pill.classList.toggle('closed', !open);
+    pillText.textContent = open ? 'NYSE Open' : 'NYSE Closed';
+  }
+  tick();
+  setInterval(tick, 1000);
+}
+
+/* --------------------------------------------------------------------
+   BOOTSTRAP
+-------------------------------------------------------------------- */
+function boot() {
+  renderSections();
+  initLoader();
+  initNav();
+  initHeroMap();
+  initClockAndStatus();
+  initReveal();
+
+  // feature modules (each defensive — one failing module shouldn't break the rest)
+  const modules = [
+    initTicker, initMoneySection, initGoldSection, initStocksSection,
+    initCryptoSection, initTradingSection, initInvestingSection,
+    initBusinessSection, initEconomySection, initAiFinanceSection,
+    initAcademySection, initNewsSection, initWatchlistSection, initObservatory
+  ];
+  modules.forEach(fn => {
+    try { fn(); } catch (err) { console.error('[Artistry Markets] module failed:', fn.name, err); }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', boot);
+
+/* --------------------------------------------------------------------
+   7. TICKER — live BTC/ETH (CoinGecko) + FX (Frankfurter) + demo items
+-------------------------------------------------------------------- */
+async function initTicker() {
+  const track = $('#ticker-track');
+  if (!track) return;
+
+  const demoBase = {
+    NIFTY: { v: 24812.35, c: 0.42 }, SENSEX: { v: 81523.20, c: 0.38 },
+    NASDAQ: { v: 19856.10, c: -0.21 }, 'S&P 500': { v: 6187.44, c: 0.15 },
+    OIL: { v: 78.32, c: -0.64 }
+  };
+
+  function renderItems(items) {
+    const html = items.map(it => `
+      <span class="tick-item">
+        <span class="tick-sym">${it.sym}</span>
+        <span class="tick-val numeral">${it.val}</span>
+        <span class="tick-chg numeral ${it.chg >= 0 ? 'up' : 'down'}">${fmtPct(it.chg)}</span>
+        ${it.demo ? '<span class="tick-demo">DEMO</span>' : ''}
+      </span>`).join('');
+    track.innerHTML = html + html;
+  }
+
+  async function refresh() {
+    const items = [];
+    try {
+      const r = await fetch(`${CONFIG.COINGECKO_BASE}/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true`);
+      const d = await r.json();
+      items.push({ sym: 'BTC', val: fmtUSD(d.bitcoin.usd, 0), chg: d.bitcoin.usd_24h_change || 0 });
+      items.push({ sym: 'ETH', val: fmtUSD(d.ethereum.usd, 0), chg: d.ethereum.usd_24h_change || 0 });
+      $('#hero-btc') && ($('#hero-btc').textContent = fmtUSD(d.bitcoin.usd, 0));
+    } catch (e) {
+      items.push({ sym: 'BTC', val: '$—', chg: 0, demo: true });
+      items.push({ sym: 'ETH', val: '$—', chg: 0, demo: true });
+    }
+
+    try {
+      const g = await fetch(`${CONFIG.GOLD_API_BASE}/price/XAU`);
+      const gd = await g.json();
+      const price = gd.price || gd.price_gram_24k * 31.1035;
+      items.push({ sym: 'GOLD', val: fmtUSD(price, 2), chg: gd.chp || gd.ch || 0 });
+      $('#hero-gold') && ($('#hero-gold').textContent = fmtUSD(price, 0));
+    } catch (e) {
+      items.push({ sym: 'GOLD', val: fmtUSD(2380, 2), chg: 0.18, demo: true });
+      $('#hero-gold') && ($('#hero-gold').textContent = '$2,380');
+    }
+
+    try {
+      const s = await fetch(`${CONFIG.GOLD_API_BASE}/price/XAG`);
+      const sd = await s.json();
+      items.push({ sym: 'SILVER', val: fmtUSD(sd.price, 2), chg: sd.chp || sd.ch || 0 });
+    } catch (e) {
+      items.push({ sym: 'SILVER', val: fmtUSD(28.4, 2), chg: -0.12, demo: true });
+    }
+
+    try {
+      const fx = await fetch(`${CONFIG.FRANKFURTER_BASE}/latest?base=USD&symbols=INR,EUR`);
+      const fd = await fx.json();
+      items.push({ sym: 'USD/INR', val: fd.rates.INR.toFixed(2), chg: 0.06 });
+      items.push({ sym: 'EUR/USD', val: (1 / fd.rates.EUR).toFixed(4), chg: -0.04 });
+    } catch (e) {
+      items.push({ sym: 'USD/INR', val: '83.40', chg: 0.06, demo: true });
+      items.push({ sym: 'EUR/USD', val: '1.0850', chg: -0.04, demo: true });
+    }
+
+    Object.entries(demoBase).forEach(([sym, o]) => {
+      items.push({ sym, val: o.v.toLocaleString('en-US', { maximumFractionDigits: 2 }), chg: o.c, demo: true });
+    });
+
+    renderItems(items);
+  }
+
+  refresh();
+  setInterval(refresh, CONFIG.REFRESH_MS);
+}
+
+/* --------------------------------------------------------------------
+   8. MONEY — currency converter, fx table, purchasing power chart
+-------------------------------------------------------------------- */
+async function initMoneySection() {
+  const from = $('#conv-from'), to = $('#conv-to'), amount = $('#conv-amount'), result = $('#conv-result');
+  const note = $('#conv-rate-note');
+  const currencies = ['USD', 'EUR', 'GBP', 'INR', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'SGD', 'AED'];
+  let rates = null;
+
+  [from, to].forEach(sel => {
+    sel.innerHTML = currencies.map(c => `<option value="${c}">${c}</option>`).join('');
+  });
+  from.value = 'USD'; to.value = 'INR';
+
+  async function loadRates() {
+    try {
+      const r = await fetch(`${CONFIG.FRANKFURTER_BASE}/latest?base=USD`);
+      const d = await r.json();
+      rates = d.rates; rates.USD = 1;
+      note.textContent = `Live rates as of ${d.date}, base USD.`;
+      renderFxTable();
+      convert();
+    } catch (e) {
+      note.textContent = 'Live rates unavailable right now — showing last known values.';
+    }
+  }
+
+  function convert() {
+    if (!rates) { result.textContent = '—'; return; }
+    const amt = parseFloat(amount.value) || 0;
+    const usd = amt / (rates[from.value] || 1);
+    const converted = usd * (rates[to.value] || 1);
+    result.textContent = converted.toLocaleString('en-US', { maximumFractionDigits: 2 }) + ' ' + to.value;
+  }
+
+  function renderFxTable() {
+    const tbody = $('#fx-table tbody');
+    const rows = ['EUR', 'GBP', 'INR', 'JPY', 'AUD', 'CNY'].map(c => {
+      const v = rates[c];
+      return `<tr><td class="name-cell">${c}</td><td class="numeral">${v ? v.toFixed(4) : '—'}</td><td class="numeral" style="color:var(--muted)">live</td></tr>`;
+    }).join('');
+    tbody.innerHTML = rows;
+  }
+
+  [amount, from, to].forEach(el => el.addEventListener('input', convert));
+  loadRates();
+  setInterval(loadRates, CONFIG.REFRESH_MS * 4);
+
+  const ppCtx = document.getElementById('purchasing-power-chart');
+  if (ppCtx && window.Chart) {
+    const years = ['1990', '1995', '2000', '2005', '2010', '2015', '2020', '2026'];
+    const values = [100, 82, 71, 63, 55, 51, 44, 38];
+    new Chart(ppCtx, {
+      type: 'line',
+      data: { labels: years, datasets: [{ label: 'Real value of original $100', data: values, borderColor: '#D4AF37', backgroundColor: 'rgba(212,175,55,0.1)', fill: true, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#D4AF37' }] },
+      options: chartBaseOptions('$')
+    });
+  }
+}
+
+function chartBaseOptions(prefix) {
+  return {
+    responsive: true,
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => (prefix || '') + ctx.formattedValue } } },
+    scales: {
+      x: { grid: { color: 'rgba(245,245,245,0.06)' }, ticks: { color: '#A9A9A9', font: { family: 'JetBrains Mono', size: 10 } } },
+      y: { grid: { color: 'rgba(245,245,245,0.06)' }, ticks: { color: '#A9A9A9', font: { family: 'JetBrains Mono', size: 10 } } }
+    }
+  };
+}
+
+/* --------------------------------------------------------------------
+   9. GOLD — live price, reserves table, history chart, calculator
+-------------------------------------------------------------------- */
+async function initGoldSection() {
+  let liveGoldPerOz = null;
+
+  async function loadLive() {
+    try {
+      const g = await fetch(`${CONFIG.GOLD_API_BASE}/price/XAU`);
+      const gd = await g.json();
+      liveGoldPerOz = gd.price;
+      $('#gold-live-price').innerHTML = fmtUSD(gd.price, 2) + '<small>/oz</small>';
+      const chg = gd.chp || gd.ch || 0;
+      const el = $('#gold-live-delta');
+      el.textContent = fmtPct(chg); el.className = 'delta ' + (chg >= 0 ? 'up' : 'down');
+      $('#gold-source-note').textContent = 'Live via gold-api.com';
+
+      const s = await fetch(`${CONFIG.GOLD_API_BASE}/price/XAG`);
+      const sd = await s.json();
+      $('#silver-live-price').innerHTML = fmtUSD(sd.price, 2) + '<small>/oz</small>';
+      const schg = sd.chp || sd.ch || 0;
+      const sel = $('#silver-live-delta');
+      sel.textContent = fmtPct(schg); sel.className = 'delta ' + (schg >= 0 ? 'up' : 'down');
+
+      $('#gold-silver-ratio').textContent = (gd.price / sd.price).toFixed(1);
+
+      const perGram = gd.price / 31.1035;
+      const nowInput = $('#gold-calc-now');
+      if (nowInput && !nowInput.dataset.touched) nowInput.value = perGram.toFixed(2);
+      runGoldCalc();
+    } catch (e) {
+      $('#gold-live-price').innerHTML = fmtUSD(2380, 2) + '<small>/oz</small>';
+      $('#gold-live-delta').textContent = 'DEMO DATA';
+      $('#gold-source-note').textContent = 'Live feed unavailable — showing demo values.';
+      $('#silver-live-price').innerHTML = fmtUSD(28.4, 2) + '<small>/oz</small>';
+      $('#gold-silver-ratio').textContent = '83.8';
+    }
+  }
+  loadLive();
+  setInterval(loadLive, CONFIG.REFRESH_MS * 3);
+
+  // reserves table
+  const rBody = $('#gold-reserves-table tbody');
+  if (rBody) {
+    rBody.innerHTML = DATA.goldReserves.map(([c, t]) => `<tr><td class="name-cell">${c}</td><td class="numeral">${t.toLocaleString()}</td></tr>`).join('');
+  }
+
+  // illustrative 10y history
+  const histCtx = document.getElementById('gold-history-chart');
+  if (histCtx && window.Chart) {
+    const labels = ['2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023', '2024', '2025', '2026'];
+    const values = [1150, 1260, 1280, 1390, 1770, 1800, 1820, 1940, 2380, 2620, 2680];
+    new Chart(histCtx, {
+      type: 'line',
+      data: { labels, datasets: [{ data: values, borderColor: '#D4AF37', backgroundColor: 'rgba(212,175,55,0.08)', fill: true, tension: 0.3, pointRadius: 2 }] },
+      options: chartBaseOptions('$')
+    });
+  }
+
+  // calculator
+  function runGoldCalc() {
+    const grams = parseFloat($('#gold-calc-grams').value) || 0;
+    const buy = parseFloat($('#gold-calc-buy').value) || 0;
+    const now = parseFloat($('#gold-calc-now').value) || 0;
+    const invested = grams * buy;
+    const value = grams * now;
+    const gain = value - invested;
+    $('#gold-calc-invested').textContent = fmtUSD(invested, 0);
+    $('#gold-calc-value').textContent = fmtUSD(value, 0);
+    const gainEl = $('#gold-calc-gain');
+    gainEl.textContent = (gain >= 0 ? '+' : '') + fmtUSD(gain, 0);
+    gainEl.style.color = gain >= 0 ? 'var(--green)' : 'var(--red)';
+  }
+  ['gold-calc-grams', 'gold-calc-buy', 'gold-calc-now'].forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener('input', () => { el.dataset.touched = '1'; runGoldCalc(); });
+  });
+  runGoldCalc();
+}
+
+/* --------------------------------------------------------------------
+   10. STOCK MARKET — demo gainers/losers/heatmap + real exchange status
+   (Wire ALPHA_VANTAGE_KEY above and replace generateMockStocks() calls
+   with real API fetches to go fully live.)
+-------------------------------------------------------------------- */
+function generateMockStocks() {
+  const universe = [
+    ['AAPL', 'Apple'], ['MSFT', 'Microsoft'], ['NVDA', 'NVIDIA'], ['GOOGL', 'Alphabet'],
+    ['AMZN', 'Amazon'], ['TSLA', 'Tesla'], ['META', 'Meta'], ['NFLX', 'Netflix'],
+    ['JPM', 'JPMorgan'], ['V', 'Visa'], ['XOM', 'Exxon'], ['WMT', 'Walmart'],
+    ['DIS', 'Disney'], ['BA', 'Boeing'], ['INTC', 'Intel'], ['AMD', 'AMD']
+  ];
+  const day = new Date().toISOString().slice(0, 10);
+  const rand = seededRandom(day.split('-').join('') * 1);
+  return universe.map(([sym, name]) => {
+    const chg = (rand() - 0.48) * 6;
+    const price = 40 + rand() * 460;
+    return { sym, name, price, chg };
+  });
+}
+
+function initStocksSection() {
+  const stocks = generateMockStocks();
+  const gainers = [...stocks].sort((a, b) => b.chg - a.chg).slice(0, 6);
+  const losers = [...stocks].sort((a, b) => a.chg - b.chg).slice(0, 6);
+  const active = [...stocks].sort(() => 0.5 - Math.random()).slice(0, 5);
+
+  const rowHtml = (s) => `<tr><td class="name-cell">${s.sym}</td><td class="numeral">${fmtUSD(s.price, 2)}</td><td class="numeral ${s.chg >= 0 ? 'up' : 'down'}" style="color:${s.chg >= 0 ? 'var(--green)' : 'var(--red)'}">${fmtPct(s.chg)}</td></tr>`;
+  $('#gainers-table tbody').innerHTML = gainers.map(rowHtml).join('');
+  $('#losers-table tbody').innerHTML = losers.map(rowHtml).join('');
+  $('#most-active-list').innerHTML = active.map(s => `<div style="display:flex; justify-content:space-between;"><span>${s.sym}</span><span style="color:var(--muted)">${fmtUSD(s.price, 2)}</span></div>`).join('');
+
+  // heatmap
+  const heat = $('#stock-heatmap');
+  heat.innerHTML = stocks.map(s => {
+    const intensity = Math.min(Math.abs(s.chg) / 4, 1);
+    const color = s.chg >= 0
+      ? `rgba(46,204,113,${0.15 + intensity * 0.55})`
+      : `rgba(231,76,60,${0.15 + intensity * 0.55})`;
+    return `<div class="heat-tile" style="background:${color}; border:1px solid var(--hairline);">
+      <span class="sym">${s.sym}</span>
+      <span class="chg" style="color:${s.chg >= 0 ? '#eafff0' : '#ffecea'}">${fmtPct(s.chg)}</span>
+    </div>`;
+  }).join('');
+
+  // real, computed exchange status
+  const nyse = DATA.hubs.find(h => h.name === 'New York');
+  const india = DATA.hubs.find(h => h.name === 'Mumbai');
+  const now = new Date();
+  const setStat = (id, hub) => {
+    const open = isExchangeOpen(hub, now);
+    const el = document.getElementById(id);
+    el.textContent = open ? 'Open' : 'Closed';
+    el.style.color = open ? 'var(--green)' : 'var(--red)';
+  };
+  setStat('mkt-nyse', nyse);
+  setStat('mkt-nasdaq', nyse);
+  setStat('mkt-india', india);
+}
+
+/* --------------------------------------------------------------------
+   11. CRYPTOCURRENCY — fully live via CoinGecko (no key required)
+-------------------------------------------------------------------- */
+async function initCryptoSection() {
+  try {
+    const [marketsRes, globalRes, trendRes] = await Promise.all([
+      fetch(`${CONFIG.COINGECKO_BASE}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1&price_change_percentage=24h`),
+      fetch(`${CONFIG.COINGECKO_BASE}/global`),
+      fetch(`${CONFIG.COINGECKO_BASE}/search/trending`)
+    ]);
+    const markets = await marketsRes.json();
+    const global = (await globalRes.json()).data;
+    const trending = await trendRes.json();
+
+    $('#crypto-mcap').textContent = '$' + fmtCompact(global.total_market_cap.usd);
+    const mcapChg = global.market_cap_change_percentage_24h_usd || 0;
+    const mEl = $('#crypto-mcap-delta');
+    mEl.textContent = fmtPct(mcapChg); mEl.className = 'delta ' + (mcapChg >= 0 ? 'up' : 'down');
+    $('#crypto-vol').textContent = '$' + fmtCompact(global.total_volume.usd);
+    $('#btc-dominance').textContent = global.market_cap_percentage.btc.toFixed(1) + '%';
+    $('#trending-coins').textContent = (trending.coins || []).slice(0, 5).map(c => c.item.symbol.toUpperCase()).join('  ·  ');
+
+    $('#crypto-table tbody').innerHTML = markets.map(c => `
+      <tr>
+        <td>${c.market_cap_rank}</td>
+        <td class="name-cell">${c.name} <span style="color:var(--muted)">${c.symbol.toUpperCase()}</span></td>
+        <td class="numeral">${fmtUSD(c.current_price, c.current_price < 1 ? 4 : 2)}</td>
+        <td class="numeral" style="color:${(c.price_change_percentage_24h || 0) >= 0 ? 'var(--green)' : 'var(--red)'}">${fmtPct(c.price_change_percentage_24h || 0)}</td>
+        <td class="numeral">$${fmtCompact(c.market_cap)}</td>
+        <td class="numeral">$${fmtCompact(c.total_volume)}</td>
+      </tr>`).join('');
+  } catch (e) {
+    $('#crypto-table tbody').innerHTML = '<tr><td colspan="6" style="color:var(--red);">Live crypto feed unavailable right now — please retry shortly.</td></tr>';
+  }
+}
+
+/* --------------------------------------------------------------------
+   12. TRADING — live candlestick chart via CoinGecko OHLC (custom canvas
+   renderer — no charting-library plugin dependency for candles)
+-------------------------------------------------------------------- */
+function drawCandles(canvas, candles) {
+  const ctx = canvas.getContext('2d');
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const wrap = canvas.parentElement;
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  if (!candles.length) return;
+
+  const padL = 60, padR = 16, padT = 16, padB = 26;
+  const plotW = w - padL - padR, plotH = h - padT - padB;
+
+  const highs = candles.map(c => c[2]), lows = candles.map(c => c[3]);
+  const max = Math.max(...highs), min = Math.min(...lows);
+  const range = (max - min) || 1;
+
+  const yFor = (v) => padT + plotH - ((v - min) / range) * plotH;
+  const n = candles.length;
+  const slot = plotW / n;
+  const bodyW = Math.max(2, slot * 0.6);
+
+  // grid + labels
+  ctx.strokeStyle = 'rgba(245,245,245,0.06)';
+  ctx.fillStyle = '#A9A9A9';
+  ctx.font = '10px JetBrains Mono, monospace';
+  ctx.textAlign = 'right';
+  for (let i = 0; i <= 4; i++) {
+    const v = min + (range * i / 4);
+    const y = yFor(v);
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(w - padR, y); ctx.stroke();
+    ctx.fillText('$' + v.toLocaleString('en-US', { maximumFractionDigits: v < 10 ? 4 : 0 }), padL - 8, y + 3);
+  }
+
+  candles.forEach((c, i) => {
+    const [ts, o, hi, lo, cl] = c;
+    const x = padL + i * slot + slot / 2;
+    const up = cl >= o;
+    ctx.strokeStyle = up ? '#2ECC71' : '#E74C3C';
+    ctx.fillStyle = up ? '#2ECC71' : '#E74C3C';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, yFor(hi)); ctx.lineTo(x, yFor(lo)); ctx.stroke();
+    const yO = yFor(o), yC = yFor(cl);
+    const top = Math.min(yO, yC), bh = Math.max(1.5, Math.abs(yC - yO));
+    ctx.fillRect(x - bodyW / 2, top, bodyW, bh);
+  });
+
+  // first/last time labels
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#A9A9A9';
+  const fmtT = (ts) => new Date(ts).toLocaleDateString([], { month: 'short', day: 'numeric' });
+  ctx.fillText(fmtT(candles[0][0]), padL, h - 8);
+  ctx.textAlign = 'right';
+  ctx.fillText(fmtT(candles[n - 1][0]), w - padR, h - 8);
+}
+
+async function loadCandles(days) {
+  const canvas = $('#candle-canvas');
+  const note = $('#candle-note');
+  try {
+    const r = await fetch(`${CONFIG.COINGECKO_BASE}/coins/bitcoin/ohlc?vs_currency=usd&days=${days}`);
+    const data = await r.json();
+    drawCandles(canvas, data);
+    const last = data[data.length - 1];
+    note.textContent = `BTC/USD · last close ${fmtUSD(last[4], 2)} · ${data.length} candles · live via CoinGecko`;
+    canvas._lastCandles = data;
+  } catch (e) {
+    note.textContent = 'Candle feed unavailable right now — please retry shortly.';
+  }
+}
+
+function initTradingSection() {
+  const canvas = $('#candle-canvas');
+  if (!canvas) return;
+  loadCandles(1);
+  $$('#candle-timeframe .chip-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      $$('#candle-timeframe .chip-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      loadCandles(btn.dataset.days);
+    });
+  });
+  window.addEventListener('resize', () => { if (canvas._lastCandles) drawCandles(canvas, canvas._lastCandles); });
+}
+
+/* --------------------------------------------------------------------
+   13. INVESTING — compound interest, SIP, allocation, growth chart
+-------------------------------------------------------------------- */
+function initInvestingSection() {
+  const ciP = $('#ci-principal'), ciR = $('#ci-rate'), ciY = $('#ci-years'), ciO
